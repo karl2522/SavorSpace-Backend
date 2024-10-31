@@ -9,6 +9,7 @@ import com.example.usersavorspace.services.AuthenticationService;
 import com.example.usersavorspace.services.JwtService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RequestMapping("/auth")
 @RestController
@@ -24,9 +25,12 @@ public class AuthenticationController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<User> register(@RequestBody RegisterUserDto registerUserDto) {
-        User registeredUser = authenticationService.signup(registerUserDto);
-
+    public ResponseEntity<User> register(
+            @RequestParam("email") String email,
+            @RequestParam("password") String password,
+            @RequestParam("fullName") String fullName,
+            @RequestParam("profilePic") MultipartFile profilePic) {
+        User registeredUser = authenticationService.signup(email, password, fullName, profilePic);
         return ResponseEntity.ok(registeredUser);
     }
 

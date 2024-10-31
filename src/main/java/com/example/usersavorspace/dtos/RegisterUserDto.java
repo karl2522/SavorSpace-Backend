@@ -7,7 +7,6 @@ public class RegisterUserDto {
 
     private String fullName;
 
-    private String imageUrl;
 
 
     // getters and setters here...
@@ -33,13 +32,5 @@ public class RegisterUserDto {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
     }
 }

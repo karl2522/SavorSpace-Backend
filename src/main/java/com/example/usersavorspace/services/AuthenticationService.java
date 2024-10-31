@@ -1,19 +1,25 @@
 package com.example.usersavorspace.services;
 
 import com.example.usersavorspace.dtos.LoginUserDto;
-import com.example.usersavorspace.dtos.RegisterUserDto;
 import com.example.usersavorspace.entities.User;
 import com.example.usersavorspace.repositories.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Service
 public class AuthenticationService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final Path fileStorageLocation;
 
     public AuthenticationService(
             UserRepository userRepository,
@@ -23,14 +29,30 @@ public class AuthenticationService {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.fileStorageLocation = Paths.get("uploads").toAbsolutePath().normalize();
+
+        try {
+            Files.createDirectories(this.fileStorageLocation);
+        } catch (Exception ex) {
+            throw new RuntimeException("Could not create the directory where the uploaded files will be stored.", ex);
+        }
     }
 
-    public User signup(RegisterUserDto input) {
+    public User signup(String email, String password, String fullName, MultipartFile profilePic) {
+        String fileName = profilePic.getOriginalFilename();
+        Path targetLocation = this.fileStorageLocation.resolve(fileName);
+
+        try {
+            Files.copy(profilePic.getInputStream(), targetLocation);
+        } catch (IOException ex) {
+            throw new RuntimeException("Could not store file " + fileName + ". Please try again!", ex);
+        }
+
         User user = new User()
-                .setFullName(input.getFullName())
-                .setEmail(input.getEmail())
-                .setPassword(passwordEncoder.encode(input.getPassword()))
-                .setImageURL(input.getImageUrl()); // Set the imageURL field
+                .setFullName(fullName)
+                .setEmail(email)
+                .setPassword(passwordEncoder.encode(password))
+                .setImageURL("/uploads/" + fileName);
 
         return userRepository.save(user);
     }
