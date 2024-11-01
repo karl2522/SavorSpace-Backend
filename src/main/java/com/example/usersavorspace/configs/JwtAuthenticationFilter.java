@@ -1,6 +1,5 @@
 package com.example.usersavorspace.configs;
 
-
 import com.example.usersavorspace.services.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -22,7 +21,6 @@ import java.io.IOException;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final HandlerExceptionResolver handlerExceptionResolver;
-
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
 
@@ -64,9 +62,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             null,
                             userDetails.getAuthorities()
                     );
-
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                } else if (jwtService.isRefreshTokenValid(jwt, userDetails)) {
+                    // Generate a new access token
+                    String newAccessToken = jwtService.generateToken(userDetails);
+                    response.setHeader("Authorization", "Bearer " + newAccessToken);
                 }
             }
 
