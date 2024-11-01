@@ -116,7 +116,7 @@ public class User implements UserDetails {
     }
 
     public User setImageURL(String imageURL) {
-        this.imageURL = imageURL; // Directly set the imageURL
+        this.imageURL = imageURL;
         return this;
     }
 

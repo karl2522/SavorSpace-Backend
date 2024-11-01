@@ -50,6 +50,10 @@ public class GlobalExceptionsHandler {
             errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(500), exception.getMessage());
             errorDetail.setProperty("description", "Unknown internal server error.");
         }
+        if (exception instanceof ExpiredJwtException) {
+            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(403), exception.getMessage());
+            errorDetail.setProperty("description", "The JWT token has expired");
+        }
 
         return errorDetail;
     }
