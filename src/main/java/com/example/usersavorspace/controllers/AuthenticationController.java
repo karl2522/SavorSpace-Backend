@@ -77,4 +77,33 @@ public class AuthenticationController {
                 + "\nConcern: " + contact.getConcern();
         emailService.sendSimpleMessage("savorspaceproject@gmail.com", subject, text);
     }
+
+    @PostMapping("/create-admin")
+    public ResponseEntity<User> createAdmin(
+            @RequestParam("email") String email,
+            @RequestParam("password") String password,
+            @RequestParam("fullName") String fullName,
+            @RequestParam("profilePic") MultipartFile profilePic) {
+        User adminUser = authenticationService.signup(email, password, fullName, profilePic, "ADMIN");
+        return ResponseEntity.ok(adminUser);
+    }
+
+    @PostMapping("/login-admin")
+    public ResponseEntity<LoginResponse> authenticateAdmin(@RequestBody LoginUserDto loginUserDto) {
+        User authenticatedUser = authenticationService.authenticate(loginUserDto);
+
+        if(!"ADMIN".equals(authenticatedUser.getRole())) {
+            return ResponseEntity.status(403).body(null);
+        }
+
+        String jwtToken = jwtService.generateToken(authenticatedUser);
+        String refreshToken = jwtService.generateRefreshToken(authenticatedUser);
+
+        LoginResponse loginResponse = new LoginResponse()
+                .setToken(jwtToken)
+                .setRefreshToken(refreshToken)
+                .setExpiresIn(jwtService.getExpirationTime());
+
+        return ResponseEntity.ok(loginResponse);
+    }
 }

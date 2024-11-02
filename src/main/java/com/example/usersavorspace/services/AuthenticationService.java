@@ -40,6 +40,10 @@ public class AuthenticationService {
     }
 
     public User signup(String email, String password, String fullName, MultipartFile profilePic) {
+        return signup(email, password, fullName, profilePic, "USER");
+    }
+
+    public User signup(String email, String password, String fullName, MultipartFile profilePic, String role) {
         String fileName = profilePic.getOriginalFilename();
         Path targetLocation = this.fileStorageLocation.resolve(fileName);
 
@@ -53,7 +57,8 @@ public class AuthenticationService {
                 .setFullName(fullName)
                 .setEmail(email)
                 .setPassword(passwordEncoder.encode(password))
-                .setImageURL("/uploads/" + fileName);
+                .setImageURL("/uploads/" + fileName)
+                .setRole(role);
 
         return userRepository.save(user);
     }
@@ -67,11 +72,15 @@ public class AuthenticationService {
         );
 
         return userRepository.findByEmail(input.getEmail())
-                .orElseThrow();
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + input.getEmail()));
     }
 
     public User loadUserByUsername(String username) {
         return userRepository.findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + username));
+    }
+
+    public User createAdmin(String email, String password, String fullName, MultipartFile profilePic) {
+        return signup(email, password, fullName, profilePic, "ADMIN");
     }
 }
