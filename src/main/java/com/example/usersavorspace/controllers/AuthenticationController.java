@@ -77,4 +77,14 @@ public class AuthenticationController {
                 + "\nConcern: " + contact.getConcern();
         emailService.sendSimpleMessage("savorspaceproject@gmail.com", subject, text);
     }
+
+    @PostMapping("/create-admin")
+    public ResponseEntity<User> createAdmin(
+            @RequestParam("email") String email,
+            @RequestParam("password") String password,
+            @RequestParam("fullName") String fullName,
+            @RequestParam("profilePic") MultipartFile profilePic) {
+        User adminUser = authenticationService.signup(email, password, fullName, profilePic, "ADMIN");
+        return ResponseEntity.ok(adminUser);
+    }
 }
