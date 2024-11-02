@@ -87,4 +87,23 @@ public class AuthenticationController {
         User adminUser = authenticationService.signup(email, password, fullName, profilePic, "ADMIN");
         return ResponseEntity.ok(adminUser);
     }
+
+    @PostMapping("/login-admin")
+    public ResponseEntity<LoginResponse> authenticateAdmin(@RequestBody LoginUserDto loginUserDto) {
+        User authenticatedUser = authenticationService.authenticate(loginUserDto);
+
+        if(!"ADMIN".equals(authenticatedUser.getRole())) {
+            return ResponseEntity.status(403).body(null);
+        }
+
+        String jwtToken = jwtService.generateToken(authenticatedUser);
+        String refreshToken = jwtService.generateRefreshToken(authenticatedUser);
+
+        LoginResponse loginResponse = new LoginResponse()
+                .setToken(jwtToken)
+                .setRefreshToken(refreshToken)
+                .setExpiresIn(jwtService.getExpirationTime());
+
+        return ResponseEntity.ok(loginResponse);
+    }
 }
