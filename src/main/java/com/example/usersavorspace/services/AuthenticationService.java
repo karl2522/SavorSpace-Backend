@@ -79,8 +79,4 @@ public class AuthenticationService {
         return userRepository.findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + username));
     }
-
-    public User createAdmin(String email, String password, String fullName, MultipartFile profilePic) {
-        return signup(email, password, fullName, profilePic, "ADMIN");
-    }
 }
