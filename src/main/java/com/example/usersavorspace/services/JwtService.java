@@ -37,7 +37,13 @@ public class JwtService {
     }
 
     public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
+        Map<String, Object> claims = new HashMap<>();
+        if(userDetails.getAuthorities().iterator().hasNext()) {
+            claims.put("role", userDetails.getAuthorities().iterator().next().getAuthority());
+        }else {
+            throw new IllegalArgumentException("User has no auhorities");
+        }
+        return generateToken(claims, userDetails);
     }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {

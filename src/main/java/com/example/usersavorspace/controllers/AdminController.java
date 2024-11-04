@@ -4,6 +4,8 @@ import com.example.usersavorspace.entities.User;
 import com.example.usersavorspace.services.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,5 +40,14 @@ public class AdminController {
     public ResponseEntity<List<User>> allUsers() {
         List<User> users = userService.allUsers();
         return ResponseEntity.ok(users);
+    }
+
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @GetMapping("/me")
+    public ResponseEntity<User> authenticatedAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User currentAdmin = (User) authentication.getPrincipal();
+        System.out.println("Authenticated admin: " + currentAdmin.getRole());
+        return ResponseEntity.ok(currentAdmin);
     }
 }
