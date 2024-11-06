@@ -34,15 +34,18 @@ public class SecurityConfiguration {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Enable CORS
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/", "/login", "/oauth2/**").permitAll() // Allow public access to login and OAuth2 routes
                         .requestMatchers("/auth/**", "/Pictures/**", "/uploads/**").permitAll()
                         .requestMatchers("/admin/**").hasAuthority("ADMIN")
-                        .anyRequest().authenticated()
+                        .anyRequest().authenticated() // Require authentication for other requests
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .oauth2Login(oauth2Login -> oauth2Login
+                        .defaultSuccessUrl("http://localhost:5173/homepage", true) // Redirect to homepage on success
+                        .failureUrl("/login?error")// Custom error page on failure
+                );
 
         return http.build();
     }
