@@ -40,8 +40,8 @@ public class JwtService {
         Map<String, Object> claims = new HashMap<>();
         if(userDetails.getAuthorities().iterator().hasNext()) {
             claims.put("role", userDetails.getAuthorities().iterator().next().getAuthority());
-        }else {
-            throw new IllegalArgumentException("User has no auhorities");
+        } else {
+            claims.put("role", "USER");
         }
         return generateToken(claims, userDetails);
     }

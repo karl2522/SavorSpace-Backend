@@ -10,6 +10,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -21,7 +22,7 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private Integer id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String fullName;
 
     @Column(unique = true, length = 100, nullable = false)
@@ -42,7 +43,7 @@ public class User implements UserDetails {
     private Date updatedAt;
 
     @Column(nullable = false)
-    private String role;
+    private String role = "USER";
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "user", cascade = CascadeType.ALL)
     private List<Recipe> recipe;
@@ -52,6 +53,9 @@ public class User implements UserDetails {
     @Override
     @JsonIgnore
     public Collection<? extends GrantedAuthority> getAuthorities() {
+        if(role == null || role.isEmpty()) {
+            return Collections.emptyList();
+        }
         return List.of(new SimpleGrantedAuthority(role));
     }
 
@@ -84,7 +88,6 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
-
 
     public Integer getId() {
         return id;

@@ -1,11 +1,16 @@
 package com.example.usersavorspace.configs;
 
+import com.example.usersavorspace.services.CustomOAuth2UserService;
+import com.example.usersavorspace.services.GithubOAuth2UserService;
+import com.example.usersavorspace.services.JwtService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -17,15 +22,45 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfiguration {
+
+
+    @Value("${spring.security.oauth2.client.registration.google.client-id}")
+    private String googleClientId;
+
+    @Value("${spring.security.oauth2.client.registration.google.client-secret}")
+    private String googleClientSecret;
+
+    @Value("${spring.security.oauth2.client.registration.github.client-id}")
+    private String githubClientId;
+
+    @Value("${spring.security.oauth2.client.registration.github.client-secret}")
+    private String githubClientSecret;
+
+
     private final AuthenticationProvider authenticationProvider;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final GithubOAuth2UserService githubOAuth2UserService;
+    private final JwtService jwtService;
+    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+    private final GithubOAuth2LoginSuccessHandler githubOAuth2LoginSuccessHandler;
 
     public SecurityConfiguration(
             JwtAuthenticationFilter jwtAuthenticationFilter,
-            AuthenticationProvider authenticationProvider
+            AuthenticationProvider authenticationProvider,
+            CustomOAuth2UserService customOAuth2UserService,
+            JwtService jwtService,
+            OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler,
+            GithubOAuth2LoginSuccessHandler githubOAuth2LoginSuccessHandler,
+            GithubOAuth2UserService githubOAuth2UserService
     ) {
         this.authenticationProvider = authenticationProvider;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.customOAuth2UserService = customOAuth2UserService;
+        this.jwtService = jwtService;
+        this.oAuth2LoginSuccessHandler = oAuth2LoginSuccessHandler;
+        this.githubOAuth2LoginSuccessHandler = githubOAuth2LoginSuccessHandler;
+        this.githubOAuth2UserService = githubOAuth2UserService;
     }
 
     @Bean
@@ -34,9 +69,26 @@ public class SecurityConfiguration {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Enable CORS
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/Pictures/**", "/uploads/**").permitAll()
+                        .requestMatchers("/auth/**", "/Pictures/**", "/uploads/**", "/oauth2/**").permitAll()
                         .requestMatchers("/admin/**").hasAuthority("ADMIN")
                         .anyRequest().authenticated()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService)
+                                .userService(githubOAuth2UserService)
+                        )
+                        .successHandler((request, response, authentication) -> {
+
+                            String clientRegistrationId = ((OAuth2AuthenticationToken) authentication)
+                                    .getAuthorizedClientRegistrationId();
+
+                            if("github".equals(clientRegistrationId)) {
+                                githubOAuth2LoginSuccessHandler.onAuthenticationSuccess(request, response, authentication);
+                            } else {
+                                oAuth2LoginSuccessHandler.onAuthenticationSuccess(request, response, authentication);
+                            }
+                        })
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -54,6 +106,8 @@ public class SecurityConfiguration {
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
+        //Add exposed headers
+        configuration.setExposedHeaders(List.of("Authorization", "Refresh-Token"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

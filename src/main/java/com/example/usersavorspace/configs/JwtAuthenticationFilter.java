@@ -65,12 +65,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 } else if (jwtService.isRefreshTokenValid(jwt, userDetails)) {
-                    // Generate a new access token
                     String newAccessToken = jwtService.generateToken(userDetails);
                     response.setHeader("Authorization", "Bearer " + newAccessToken);
                 }
             }
-
             filterChain.doFilter(request, response);
         } catch (Exception exception) {
             handlerExceptionResolver.resolveException(request, response, null, exception);
