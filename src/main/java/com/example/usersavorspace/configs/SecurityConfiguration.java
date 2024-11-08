@@ -69,7 +69,9 @@ public class SecurityConfiguration {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Enable CORS
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/Pictures/**", "/uploads/**", "/oauth2/**").permitAll()
+                        .requestMatchers("/auth/login", "/auth/signup", "/auth/refresh-token", "/auth/email", "/auth/login-admin", "/auth/create-admin").permitAll()
+                        .requestMatchers("/auth/verify-token").authenticated()
+                        .requestMatchers("/Pictures/**", "/uploads/**", "/oauth2/**").permitAll()
                         .requestMatchers("/admin/**").hasAuthority("ADMIN")
                         .anyRequest().authenticated()
                 )

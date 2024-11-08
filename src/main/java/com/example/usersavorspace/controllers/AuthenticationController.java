@@ -14,6 +14,8 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -34,6 +36,20 @@ public class AuthenticationController {
     public AuthenticationController(JwtService jwtService, AuthenticationService authenticationService) {
         this.jwtService = jwtService;
         this.authenticationService = authenticationService;
+    }
+
+    @PostMapping("/verify-token")
+    public ResponseEntity<?> verifyToken() {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+            if(authentication != null && authentication.isAuthenticated()) {
+                return ResponseEntity.ok(Map.of("valid", true));
+            }
+            return ResponseEntity.ok(Map.of("valid", false));
+        }catch (Exception e) {
+            return ResponseEntity.ok(Map.of("valid", false));
+        }
     }
 
     @PostMapping("/signup")
