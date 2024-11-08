@@ -31,14 +31,18 @@ public class GithubOAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSucc
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
         OAuth2User oidcUser = (OAuth2User) authentication.getPrincipal();
 
+        String username = oidcUser.getAttribute("login");
        String email = oidcUser.getAttribute("email");
        String name = oidcUser.getAttribute("name");
        String avatarUrl = oidcUser.getAttribute("avatar_url");
-       String username = oidcUser.getAttribute("login");
+       if(email == null && username != null) {
+           email = username + "@github.com";
+       }
 
+        String finalEmail = email;
         User user = userService.findByEmail(email).orElseGet(() -> {
             User newUser = new User();
-            newUser.setEmail(email);
+            newUser.setEmail(finalEmail);
             newUser.setFullName(name != null ? name : username);
             newUser.setImageURL(avatarUrl);
             newUser.setRole("USER");

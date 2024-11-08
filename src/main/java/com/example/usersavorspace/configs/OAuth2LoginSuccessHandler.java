@@ -41,7 +41,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
             newUser.setRole("USER");
             newUser.setPassword(UUID.randomUUID().toString());
             return userService.save(newUser);
-        });
+        }); 
 
         String token = jwtService.generateToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);

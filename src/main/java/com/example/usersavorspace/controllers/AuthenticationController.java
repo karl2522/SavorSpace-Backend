@@ -7,11 +7,17 @@ import com.example.usersavorspace.entities.User;
 import com.example.usersavorspace.services.AuthenticationService;
 import com.example.usersavorspace.services.EmailService;
 import com.example.usersavorspace.services.JwtService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.net.URI;
 import java.util.Map;
 
 @RequestMapping("/auth")
@@ -105,5 +111,26 @@ public class AuthenticationController {
                 .setExpiresIn(jwtService.getExpirationTime());
 
         return ResponseEntity.ok(loginResponse);
+    }
+
+    @GetMapping("/logout/github")
+    public ResponseEntity<Void> logoutGithub(HttpServletRequest request, HttpServletResponse response) {
+
+        HttpSession session = request.getSession(false);
+        if(session != null) {
+            session.invalidate();
+        }
+
+        Cookie[] cookies = request.getCookies();
+        if(cookies != null) {
+            for(Cookie cookie : cookies) {
+                cookie.setValue("");
+                cookie.setPath("/");
+                cookie.setMaxAge(0);
+                response.addCookie(cookie);
+            }
+        }
+
+        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create("https://github.com/logout")).build();
     }
 }
