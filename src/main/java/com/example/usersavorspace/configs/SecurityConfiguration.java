@@ -73,6 +73,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/auth/verify-token").authenticated()
                         .requestMatchers("/Pictures/**", "/uploads/**", "/oauth2/**").permitAll()
                         .requestMatchers("/admin/**").hasAuthority("ADMIN")
+                        .requestMatchers("/users/change-password").authenticated()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2

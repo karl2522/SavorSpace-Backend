@@ -38,14 +38,24 @@ public class UserService {
         Optional<User> existingUser = userRepository.findById(id);
         if (existingUser.isPresent()) {
             User updatedUser = existingUser.get();
-            updatedUser.setFullName(user.getFullName());
-            updatedUser.setEmail(user.getEmail());
-            updatedUser.setPassword(user.getPassword());
-            updatedUser.setImageURL(user.getImageURL());
-            updatedUser.setRole(user.getRole());
+
+            // Only update fields that are provided
+            if (user.getFullName() != null) {
+                updatedUser.setFullName(user.getFullName());
+            }
+            if (user.getEmail() != null) {
+                updatedUser.setEmail(user.getEmail());
+            }
+            if (user.getImageURL() != null) {
+                updatedUser.setImageURL(user.getImageURL());
+            }
+            if (user.getRole() != null) {
+                updatedUser.setRole(user.getRole());
+            }
+
             return userRepository.save(updatedUser);
         } else {
-            throw new RuntimeException("User not found");
+            throw new RuntimeException("User not found with id: " + id);
         }
     }
 }
