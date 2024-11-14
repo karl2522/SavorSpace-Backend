@@ -4,7 +4,12 @@ package com.example.usersavorspace.services;
 import com.example.usersavorspace.entities.User;
 import com.example.usersavorspace.repositories.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -12,6 +17,20 @@ import java.util.Optional;
 @Service
 public class UserService {
     private final UserRepository userRepository;
+    private final Path fileStorageLocation;
+
+
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+        this.fileStorageLocation = Paths.get("uploads").toAbsolutePath().normalize();
+
+        try {
+            Files.createDirectories(this.fileStorageLocation);
+        }catch (Exception ex) {
+            throw new RuntimeException("Could not create the directory where the uploaded files will be stored.", ex);
+        }
+    }
+
 
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
@@ -19,9 +38,6 @@ public class UserService {
 
     public User save(User user) {
         return userRepository.save(user);
-    }
-    public UserService(UserRepository userRepository) {
-        this.userRepository = userRepository;
     }
 
     public List<User> allUsers() {
@@ -34,28 +50,66 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
-    public User updateUser(Integer id, User user) {
+    public User adminUpdateUser(Integer id, User user) {
         Optional<User> existingUser = userRepository.findById(id);
-        if (existingUser.isPresent()) {
+        if(existingUser.isPresent()) {
+
             User updatedUser = existingUser.get();
 
-            // Only update fields that are provided
-            if (user.getFullName() != null) {
+            if(user.getFullName() != null) {
                 updatedUser.setFullName(user.getFullName());
             }
-            if (user.getEmail() != null) {
+            if(user.getEmail() != null) {
                 updatedUser.setEmail(user.getEmail());
             }
-            if (user.getImageURL() != null) {
-                updatedUser.setImageURL(user.getImageURL());
-            }
-            if (user.getRole() != null) {
+
+            if(user.getRole() != null) {
                 updatedUser.setRole(user.getRole());
             }
 
             return userRepository.save(updatedUser);
-        } else {
-            throw new RuntimeException("User not found with id: " + id);
+        }else {
+            throw new RuntimeException("User not found id: " + id);
+        }
+    }
+
+    public User updateUser(Integer id, User userDetails, MultipartFile newProfilePic) {
+        Optional<User> existingUser = userRepository.findById(id);
+        if(existingUser.isPresent()) {
+
+            User updatedUser = existingUser.get();
+
+            if(userDetails.getFullName() != null) {
+                updatedUser.setFullName(userDetails.getFullName());
+            }
+            if(userDetails.getEmail() != null) {
+                updatedUser.setEmail(userDetails.getEmail());
+            }
+            if(userDetails.getRole() != null) {
+                updatedUser.setRole(userDetails.getRole());
+            }
+
+            if(newProfilePic != null && !newProfilePic.isEmpty()) {
+                try {
+
+                    if(updatedUser.getImageURL() != null) {
+                        Path oldFile = Paths.get("." + updatedUser.getImageURL());
+                        Files.deleteIfExists(oldFile);
+                    }
+
+                    String fileName = System.currentTimeMillis() + "_" + newProfilePic.getOriginalFilename();
+                    Path targetLocation = this.fileStorageLocation.resolve(fileName);
+                    Files.copy(newProfilePic.getInputStream(), targetLocation);
+
+                    updatedUser.setImageURL("/uploads/" + fileName);
+                }catch (IOException ex) {
+                    throw new RuntimeException("Could not store file " + newProfilePic.getOriginalFilename() + ". Please try again!", ex);
+                }
+            }
+
+            return userRepository.save(updatedUser);
+        }else {
+            throw new RuntimeException("User not found id: " + id);
         }
     }
 }
