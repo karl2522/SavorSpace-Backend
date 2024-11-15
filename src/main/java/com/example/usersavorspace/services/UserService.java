@@ -3,6 +3,8 @@ package com.example.usersavorspace.services;
 
 import com.example.usersavorspace.entities.User;
 import com.example.usersavorspace.repositories.UserRepository;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,10 +20,12 @@ import java.util.Optional;
 public class UserService {
     private final UserRepository userRepository;
     private final Path fileStorageLocation;
+    private final BCryptPasswordEncoder passwordEncoder;
 
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
         this.fileStorageLocation = Paths.get("uploads").toAbsolutePath().normalize();
 
         try {
@@ -31,6 +35,29 @@ public class UserService {
         }
     }
 
+    public User deactivateAccount(Integer userId, String password) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if(!passwordEncoder.matches(password, user.getPassword())) {
+            throw new RuntimeException("Incorrect password");
+        }
+
+        user.setActive(false);
+        return userRepository.save(user);
+    }
+
+    public User reactivateAccount(Integer userId, String password) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if(!passwordEncoder.matches(password, user.getPassword())) {
+            throw new RuntimeException("Incorrect password");
+        }
+
+        user.setActive(true);
+        return userRepository.save(user);
+    }
 
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);

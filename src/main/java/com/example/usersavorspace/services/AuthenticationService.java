@@ -4,6 +4,7 @@ import com.example.usersavorspace.dtos.LoginUserDto;
 import com.example.usersavorspace.entities.User;
 import com.example.usersavorspace.repositories.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -64,6 +65,25 @@ public class AuthenticationService {
     }
 
     public User authenticate(LoginUserDto input) {
+        User user = userRepository.findByEmail(input.getEmail())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + input.getEmail()));
+
+        if(!user.isActive()) {
+            throw new DisabledException("Account is deactivated");
+        }
+
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        input.getEmail(),
+                        input.getPassword()
+                )
+        );
+
+        return user;
+    }
+
+
+    /*public User authenticate(LoginUserDto input) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         input.getEmail(),
@@ -73,10 +93,22 @@ public class AuthenticationService {
 
         return userRepository.findByEmail(input.getEmail())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + input.getEmail()));
-    }
+    }*/
 
-    public User loadUserByUsername(String username) {
+
+    /*public User loadUserByUsername(String username) {
         return userRepository.findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + username));
+    }*/
+
+    public User loadUserByUsername(String username) {
+        User user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + username));
+
+        if(!user.isActive()) {
+            throw new DisabledException("Account is deactivated");
+        }
+
+        return user;
     }
 }

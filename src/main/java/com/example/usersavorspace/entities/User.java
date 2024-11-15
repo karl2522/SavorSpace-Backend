@@ -45,6 +45,10 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String role = "USER";
 
+    @Column(nullable = false)
+    private boolean active = true;
+
+
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "user", cascade = CascadeType.ALL)
     private List<Recipe> recipe;
 
@@ -152,5 +156,13 @@ public class User implements UserDetails {
     public User setRole(String role) {
         this.role = role;
         return this;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 }

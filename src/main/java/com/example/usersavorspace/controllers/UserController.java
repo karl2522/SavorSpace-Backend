@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 @RequestMapping("/users")
 @RestController
@@ -35,6 +36,32 @@ public class UserController {
         this.userService = userService;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+    }
+
+    @PostMapping("/{id}/deactivate")
+    public ResponseEntity<?> deactivateAccount(
+            @PathVariable Integer id,
+            @RequestBody Map<String, String> credentials) {
+        try {
+            User user = userService.deactivateAccount(id, credentials.get("password"));
+            return ResponseEntity.ok().build();
+        }catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/{id}/reactivate")
+    public ResponseEntity<?> reactivateAccount(
+            @PathVariable Integer id,
+            @RequestBody Map<String, String> credentials) {
+        try {
+            User user = userService.reactivateAccount(id, credentials.get("password"));
+            return ResponseEntity.ok().build();
+        }catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
+        }
     }
 
     @PostMapping("/change-password")
