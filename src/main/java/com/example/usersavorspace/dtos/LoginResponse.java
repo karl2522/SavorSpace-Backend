@@ -8,6 +8,8 @@ public class LoginResponse {
     private long expiresIn;
     private Integer userId;
     private User user;
+    private String error;
+    private String status;
 
     public String getToken() {
         return token;
@@ -51,6 +53,24 @@ public class LoginResponse {
 
     public LoginResponse setUser(User user) {
         this.user = user;
+        return this;
+    }
+
+    public String getError() {
+        return error;
+    }
+
+    public LoginResponse setError(String error) {
+        this.error = error;
+        return this;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public LoginResponse setStatus(String status) {
+        this.status = status;
         return this;
     }
 }

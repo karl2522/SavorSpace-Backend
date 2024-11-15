@@ -169,10 +169,12 @@ public class AuthenticationController {
                     .setExpiresIn(jwtService.getExpirationTime())
                     .setUserId(reactivatedUser.getId())
                     .setUser(reactivatedUser);
-
             return ResponseEntity.ok(loginResponse);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(null);
+        } catch (RuntimeException e) {
+            LoginResponse errorResponse = new LoginResponse()
+                    .setError(e.getMessage())
+                    .setStatus("error");
+            return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 
