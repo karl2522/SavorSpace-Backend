@@ -59,7 +59,8 @@ public class AuthenticationService {
                 .setEmail(email)
                 .setPassword(passwordEncoder.encode(password))
                 .setImageURL("/uploads/" + fileName)
-                .setRole(role);
+                .setRole(role)
+                .setActive(true);
 
         return userRepository.save(user);
     }
@@ -110,5 +111,37 @@ public class AuthenticationService {
         }
 
         return user;
+    }
+
+    public User reactivateAccount(String email, String password) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+
+        if(!passwordEncoder.matches(password, user.getPassword())) {
+            throw new RuntimeException("Incorrect password");
+        }
+
+        if(user.isActive()) {
+            throw new RuntimeException("Account is already active");
+        }
+
+        user.setActive(true);
+        return userRepository.save(user);
+    }
+
+    public User deactivateAccount(String email, String password) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+
+        if(!passwordEncoder.matches(password, user.getPassword())) {
+            throw new RuntimeException("Incorrect password");
+        }
+
+        if(!user.isActive()) {
+            throw new RuntimeException("Account is already deactivated");
+        }
+
+        user.setActive(false);
+        return userRepository.save(user);
     }
 }

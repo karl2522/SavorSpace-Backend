@@ -1,9 +1,13 @@
 package com.example.usersavorspace.dtos;
 
+import com.example.usersavorspace.entities.User;
+
 public class LoginResponse {
     private String token;
     private String refreshToken;
     private long expiresIn;
+    private Integer userId;
+    private User user;
 
     public String getToken() {
         return token;
@@ -29,6 +33,24 @@ public class LoginResponse {
 
     public LoginResponse setExpiresIn(long expiresIn) {
         this.expiresIn = expiresIn;
+        return this;
+    }
+
+    public Integer getUserId() {
+        return userId;
+    }
+
+    public LoginResponse setUserId(Integer userId) {
+        this.userId = userId;
+        return this;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public LoginResponse setUser(User user) {
+        this.user = user;
         return this;
     }
 }

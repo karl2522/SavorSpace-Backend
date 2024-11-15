@@ -38,7 +38,7 @@ public class UserController {
         this.passwordEncoder = passwordEncoder;
     }
 
-    @PostMapping("/{id}/deactivate")
+   /* @PostMapping("/{id}/deactivate")
     public ResponseEntity<?> deactivateAccount(
             @PathVariable Integer id,
             @RequestBody Map<String, String> credentials) {
@@ -62,7 +62,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(e.getMessage());
         }
-    }
+    }*/
 
     @PostMapping("/change-password")
     public ResponseEntity<?> changePassword(

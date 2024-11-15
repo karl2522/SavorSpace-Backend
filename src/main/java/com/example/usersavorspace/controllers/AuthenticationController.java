@@ -72,7 +72,8 @@ public class AuthenticationController {
         LoginResponse loginResponse = new LoginResponse()
                 .setToken(jwtToken)
                 .setRefreshToken(refreshToken)
-                .setExpiresIn(jwtService.getExpirationTime());
+                .setExpiresIn(jwtService.getExpirationTime())
+                .setUserId(authenticatedUser.getId());
 
         return ResponseEntity.ok(loginResponse);
     }
@@ -148,5 +149,49 @@ public class AuthenticationController {
         }
 
         return ResponseEntity.status(HttpStatus.FOUND).location(URI.create("https://github.com/logout")).build();
+    }
+
+    @PostMapping("/reactivate")
+    public ResponseEntity<LoginResponse> reactivateAccount(@RequestBody LoginUserDto loginUserDto) {
+        try {
+            User reactivatedUser = authenticationService.reactivateAccount(
+                    loginUserDto.getEmail(),
+                    loginUserDto.getPassword()
+            );
+
+            // Generate new tokens
+            String jwtToken = jwtService.generateToken(reactivatedUser);
+            String refreshToken = jwtService.generateRefreshToken(reactivatedUser);
+
+            LoginResponse loginResponse = new LoginResponse()
+                    .setToken(jwtToken)
+                    .setRefreshToken(refreshToken)
+                    .setExpiresIn(jwtService.getExpirationTime())
+                    .setUserId(reactivatedUser.getId())
+                    .setUser(reactivatedUser);
+
+            return ResponseEntity.ok(loginResponse);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
+
+    @PostMapping("/deactivate")
+    public ResponseEntity<?> deactivateAccount(@RequestBody LoginUserDto loginUserDto) {
+        try {
+            User deactivatedUser = authenticationService.deactivateAccount(
+                    loginUserDto.getEmail(),
+                    loginUserDto.getPassword()
+            );
+
+            return ResponseEntity.ok()
+                    .body(Map.of(
+                            "message", "Account deactivated successfully.",
+                            "email", deactivatedUser.getEmail()
+                    ));
+        }catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
+        }
     }
 }
