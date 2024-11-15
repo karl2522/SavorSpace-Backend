@@ -13,8 +13,12 @@ A web-based platform where users can share, explore, and discover a variety of r
 ## Technologies Used
 
 - Frontend: ReactJS, Vite
-- Backend: Spring boot Java
+- Backend: Spring boot Java, Intellij Ultimate
 
 
 ## Project Diagrams
 [Click here to view the project diagrams](https://cebuinstituteoftechnology-my.sharepoint.com/:b:/g/personal/jaredkarl_omen_cit_edu/EW4NR6RHSitOm5iFY4AfwO8B9u5TvFCBnFdUmPBTrMS6Xw?e=Luh1Yg)
+
+
+## Clickup Link
+[Click here to view our project's progress] (https://app.clickup.com/9016588107/v/o/f/90162915375)
