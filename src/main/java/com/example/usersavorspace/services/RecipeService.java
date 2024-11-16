@@ -3,88 +3,107 @@ package com.example.usersavorspace.services;
 import com.example.usersavorspace.entities.Recipe;
 import com.example.usersavorspace.entities.User;
 import com.example.usersavorspace.exceptions.RecipeNotFoundException;
+import com.example.usersavorspace.exceptions.ResourceNotFoundException;
 import com.example.usersavorspace.repositories.RecipeRepository;
 import com.example.usersavorspace.repositories.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.naming.NameNotFoundException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 
 @Service
+@Transactional
 public class RecipeService {
 
-    @Autowired
-    private RecipeRepository recipeRepository;
+    private final RecipeRepository recipeRepository;
+    private final UserRepository userRepository;
+    private final Path fileStorageLocation;
 
     @Autowired
-    private UserRepository userRepository;
+    public RecipeService(RecipeRepository recipeRepository, UserRepository userRepository) {
+        this.recipeRepository = recipeRepository;
+        this.userRepository = userRepository;
+        this.fileStorageLocation = Paths.get("uploads").toAbsolutePath().normalize();
 
-    // Create recipe
-    public Recipe addRecipe(Recipe recipe) {
         try {
-            if (recipe.getUser() != null && recipe.getUser().getId() != null) {
-                // Fetch the managed UserEntity from the database
-                User user = userRepository.findById(recipe.getUser().getId())
-                        .orElseThrow(() -> new NameNotFoundException("User not found with ID: " + recipe.getUser().getId()));
+            Files.createDirectories(this.fileStorageLocation);
+        }catch (Exception ex) {
+            throw new RuntimeException("Could not create the directory where the uploaded files will be stored.", ex);
+        }
+    }
 
-                // Set the managed UserEntity on the RecipeEntity
-                recipe.setUser(user);
+    @Transactional
+    public Recipe addRecipe(Recipe recipe, Integer userId, MultipartFile image) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
+        if(image != null && !image.isEmpty()) {
+            String fileName = System.currentTimeMillis() + "_" + image.getOriginalFilename();
+            Path targetLocation = this.fileStorageLocation.resolve(fileName);
+
+            try {
+                Files.copy(image.getInputStream(), targetLocation);
+                recipe.setImageURL("/uploads/" + fileName);
+            }catch (IOException ex) {
+                throw new RuntimeException("Could not store file " + fileName + ". Please try again!", ex);
             }
-            return recipeRepository.save(recipe);
-        } catch (Exception e) {
-            throw new RuntimeException("Recipe could not be added, please try again.", e);
         }
+        recipe.setUser(user);
+        recipe.setCreatedAt(LocalDateTime.now());
+        return recipeRepository.save(recipe);
     }
 
-
-    // Get all recipes
-    public List<Recipe> getAllRecipes() {
-        return recipeRepository.findAll();
+    @Transactional()
+    public Page<Recipe> getAllRecipes(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return recipeRepository.findAllByOrderByCreatedAtDesc(pageable);
     }
 
-    // Get recipe by recipeID
-    public Recipe getRecipeById(int recipeID) {
-        return recipeRepository.findById(recipeID)
-                .orElseThrow(() -> new NoSuchElementException("Recipe not found with ID: " + recipeID));
+    public Recipe getRecipeById(int recipeId) {
+        return recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new RecipeNotFoundException("Recipe not found with id: " + recipeId));
     }
 
+    public Recipe updateRecipe(int recipeId, Recipe recipe, Integer userId) {
 
-    // Update recipe
-    public Recipe updateRecipe(int recipeID, Recipe recipe) {
-        return recipeRepository.findById(recipeID)
-                .map(existingRecipe -> {
-                    existingRecipe.setTitle(recipe.getTitle());
-                    existingRecipe.setDescription(recipe.getDescription());
-                    existingRecipe.setIngredients(recipe.getIngredients());
-                    existingRecipe.setInstructions(recipe.getInstructions());
-                    existingRecipe.setImageUrl(recipe.getImageUrl());
-                    return recipeRepository.save(existingRecipe);
-                })
-                .orElseThrow(() -> new RecipeNotFoundException("Recipe with ID " + recipeID + " not found!"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
+        Recipe existingRecipe = recipeRepository.findByRecipeIDAndUser(recipeId, user)
+                .orElseThrow(() -> new RecipeNotFoundException("Recipe not found with id: " + recipeId));
+
+        existingRecipe.setTitle(recipe.getTitle());
+        existingRecipe.setDescription(recipe.getDescription());
+        existingRecipe.setIngredients(recipe.getIngredients());
+        existingRecipe.setInstructions(recipe.getInstructions());
+        existingRecipe.setImageURL(recipe.getImageURL());
+        existingRecipe.setUpdatedAt(LocalDateTime.now());
+
+        return recipeRepository.save(existingRecipe);
     }
 
+    public void deleteRecipe(int recipeId, Integer userId) {
 
-    // Delete recipe by recipeID
-    public String deleteRecipe(int recipeID) {
-        String msg;
-        if (recipeRepository.findById(recipeID).isPresent()) {
-            recipeRepository.deleteById(recipeID);
-            msg = "Recipe record has been successfully deleted!";
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
+
+        if(!recipeRepository.existsByRecipeIDAndUser(recipeId, user)) {
+            throw new RecipeNotFoundException("Recipe not found with id: " + recipeId);
         }
-        else {
-            msg = recipeID + " is NOT FOUND!";
-        }
-        return msg;
-    }
 
-    // Delete all recipes
-    public List<Recipe> deleteAllRecipes() {
-        List<Recipe> recipe = recipeRepository.findAll();
-        if (!recipe.isEmpty()) {
-            recipeRepository.deleteAll();
-        }
-        return recipe;
+        recipeRepository.deleteById(recipeId);
     }
 }

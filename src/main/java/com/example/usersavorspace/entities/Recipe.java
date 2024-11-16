@@ -1,103 +1,129 @@
 package com.example.usersavorspace.entities;
 
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
-@Table(name = "Recipe")
-@Entity
-public class Recipe {
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "recipes")
+public class Recipe {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "recipe_id")
     private int recipeID;
 
-    @Column
+    @Column(nullable = false)
     private String title;
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String ingredients;
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String instructions;
 
-    @Column
-    private String imageUrl;
+    @Column(name = "image_url")
+    private String imageURL;
 
-    @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "userID")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    public Recipe() {
-        super();
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
     }
 
-    private Recipe(int recipeID, String title, String description, String ingredients, String instructions, String imageUrl) {
-        this.recipeID = recipeID;
-        this.title = title;
-        this.description = description;
-        this.ingredients = ingredients;
-        this.instructions = instructions;
-        this.imageUrl = imageUrl;
-
-    }
-
-    public int getRecipeID() {
-        return recipeID;
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 
     public String getTitle() {
         return title;
     }
 
-    public String getDescription() {
-        return description;
+    public void setTitle(String title) {
+        this.title = title;
     }
 
-    public String getIngredients() {
-        return ingredients;
-    }
-
-    public String getInstructions() {
-        return instructions;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public User getUser() {
-        return user;
+    public int getRecipeID() {
+        return recipeID;
     }
 
     public void setRecipeID(int recipeID) {
         this.recipeID = recipeID;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public String getDescription() {
+        return description;
     }
 
     public void setDescription(String description) {
         this.description = description;
     }
 
+    public String getIngredients() {
+        return ingredients;
+    }
+
     public void setIngredients(String ingredients) {
         this.ingredients = ingredients;
+    }
+
+    public String getInstructions() {
+        return instructions;
     }
 
     public void setInstructions(String instructions) {
         this.instructions = instructions;
     }
 
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+    public String getImageURL() {
+        return imageURL;
+    }
+
+    public void setImageURL(String imageURL) {
+        this.imageURL = imageURL;
+    }
+
+    public User getUser() {
+        return user;
     }
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }
 

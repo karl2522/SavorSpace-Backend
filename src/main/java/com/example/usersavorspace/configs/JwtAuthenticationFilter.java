@@ -1,5 +1,6 @@
 package com.example.usersavorspace.configs;
 
+import com.example.usersavorspace.entities.User;
 import com.example.usersavorspace.services.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -57,6 +58,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
                 if (jwtService.isTokenValid(jwt, userDetails)) {
+
+                    if(userDetails instanceof User) {
+                        User user = (User) userDetails;
+                        request.setAttribute("userId", user.getId());
+                    }
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails,
                             null,

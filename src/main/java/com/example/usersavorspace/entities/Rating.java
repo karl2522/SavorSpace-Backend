@@ -9,11 +9,11 @@ public class Rating {
     private Long ratingID;
 
     @ManyToOne
-    @JoinColumn(name = "recipeID", nullable = false)
+    @JoinColumn(name = "recipeid", nullable = false)
     private Recipe recipe;
 
     @ManyToOne
-    @JoinColumn(name = "userID", nullable = false)
+    @JoinColumn(name = "userid", nullable = false)
     private User user;
 
     private int rating;
