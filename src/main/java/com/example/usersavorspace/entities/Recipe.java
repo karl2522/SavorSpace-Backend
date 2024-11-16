@@ -19,6 +19,9 @@ public class Recipe {
     @Column(nullable = false)
     private String title;
 
+    @Column(name = "average_rating")
+    private Double averageRating;
+
     @Column(columnDefinition = "TEXT")
     private String description;
 
@@ -124,6 +127,14 @@ public class Recipe {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Double getAverageRating() {
+        return averageRating;
+    }
+
+    public void setAverageRating(Double averageRating) {
+        this.averageRating = averageRating;
     }
 }
 

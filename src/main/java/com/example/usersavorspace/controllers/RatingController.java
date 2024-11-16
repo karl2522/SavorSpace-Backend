@@ -19,29 +19,30 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/ratings")
 public class RatingController {
-
-
     @Autowired
     private RatingService ratingService;
 
     @PostMapping("/rate")
     public ResponseEntity<RatingDTO> rateRecipe(
-            @RequestParam Integer recipeID,
-            @RequestParam int rating) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        Integer userId = ((User) userDetails).getId();
-
-        RatingDTO ratingDTO = ratingService.addOrUpdateRating(userId, recipeID, rating);
+            @RequestParam Integer recipeId,  // Changed from recipeID to match service
+            @RequestParam int rating,
+            Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        RatingDTO ratingDTO = ratingService.addOrUpdateRating(user.getId(), recipeId, rating);
         return ResponseEntity.ok(ratingDTO);
     }
 
-    @GetMapping("/recipe/{recipeId}/user/{userId}")
+    @GetMapping("/recipe/{recipeId}")
     public ResponseEntity<RatingDTO> getRating(
-            @PathVariable Integer recipeID,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        Integer userId = ((User) userDetails).getId();
-        RatingDTO ratingDTO = ratingService.getRatingForRecipe(userId, recipeID);
+            @PathVariable Integer recipeId,  // Changed from recipeID
+            Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        RatingDTO ratingDTO = ratingService.getRatingForRecipe(recipeId, user.getId());
         return ResponseEntity.ok(ratingDTO);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleException(Exception e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
     }
 }

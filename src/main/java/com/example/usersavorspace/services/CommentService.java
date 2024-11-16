@@ -1,53 +1,132 @@
 package com.example.usersavorspace.services;
 
+import com.example.usersavorspace.dtos.CommentDTO;
 import com.example.usersavorspace.entities.Comment;
+import com.example.usersavorspace.entities.Recipe;
+import com.example.usersavorspace.entities.User;
+import com.example.usersavorspace.exceptions.ResourceNotFoundException;
+import com.example.usersavorspace.exceptions.UnauthorizedException;
 import com.example.usersavorspace.repositories.CommentRepository;
+import com.example.usersavorspace.repositories.RecipeRepository;
+import com.example.usersavorspace.repositories.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class CommentService {
+
     @Autowired
     private CommentRepository commentRepository;
 
-    public List<Comment> getAllComments() {
-        return commentRepository.findAll();
-    }
+    @Autowired
+    private RecipeRepository recipeRepository;
 
-    public Optional<Comment> getCommentById(Long id) {
-        return commentRepository.findById(id);
-    }
+    @Autowired
+    private UserRepository userRepository;
 
-    public Comment createComment(Comment comment) {
-        if (comment.getCreatedAt() == null) {
-            comment.setCreatedAt(LocalDateTime.now());
+    @Transactional
+    public List<CommentDTO> getCommentsByRecipe(Integer recipeId) {
+        try {
+            //System.out.println("Looking up recipe with ID: " + recipeId);
+
+            Recipe recipe = recipeRepository.findById(recipeId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Recipe not found with id: " + recipeId));
+
+            //System.out.println("Found recipe, fetching comments");
+
+            List<Comment> comments = commentRepository.findByRecipeOrderByCreatedAtDesc(recipe);
+            //System.out.println("Found " + comments.size() + " comments");
+
+            return comments.stream()
+                    .map(this::convertToDTO)
+                    .filter(dto -> dto != null)
+                    .collect(Collectors.toList());
+
+        } catch (Exception e) {
+            System.err.println("Error in getCommentsByRecipe: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
         }
-        return commentRepository.save(comment);
     }
 
-    public Comment updateComment(Long id, Comment updatedComment) {
-        return commentRepository.findById(id)
-                .map(comment -> {
-                    comment.setRecipeID(updatedComment.getRecipeID());
-                    comment.setUserID(updatedComment.getUserID());
-                    comment.setContent(updatedComment.getContent());
-                    comment.setIsFlagged(updatedComment.getIsFlagged());
-                    if (updatedComment.getCreatedAt() != null) {
-                        comment.setCreatedAt(updatedComment.getCreatedAt());
-                    }
-                    return commentRepository.save(comment);
-                })
-                .orElseGet(() -> {
-                    updatedComment.setCommentID(id);
-                    return commentRepository.save(updatedComment);
-                });
+    public CommentDTO createComment(Integer recipeId, String content, Authentication authentication) {
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Recipe not found with id: " + recipeId));
+
+        User user = userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        Comment comment = new Comment();
+        comment.setContent(content);
+        comment.setRecipe(recipe);
+        comment.setUser(user);
+        comment.setCreatedAt(LocalDateTime.now());
+        comment.setFlagged(false);
+
+        Comment savedComment = commentRepository.save(comment);
+        return convertToDTO(savedComment);
     }
 
-    public void deleteComment(Long id) {
-        commentRepository.deleteById(id);
+    private CommentDTO convertToDTO(Comment comment) {
+        try {
+            CommentDTO dto = new CommentDTO();
+            dto.setCommentID(comment.getCommentID());
+            dto.setContent(comment.getContent());
+            dto.setCreatedAt(comment.getCreatedAt());
+
+            if (comment.getRecipe() != null) {
+                dto.setRecipeID(comment.getRecipe().getRecipeID());
+            }
+
+            if (comment.getUser() != null) {
+                User user = comment.getUser();
+                dto.setUserID(user.getId());
+                dto.setUsername(user.getFullName()); // Use fullName instead of email
+                dto.setUserEmail(user.getEmail());
+                dto.setUserImageURL(user.getImageURL());
+            }
+
+            dto.setFlagged(comment.getFlagged() != null ? comment.getFlagged() : false);
+
+            // Debug logging
+            /*System.out.println("Converting Comment to DTO:");
+            System.out.println("CommentID: " + dto.getCommentID());
+            System.out.println("Username: " + dto.getUsername());
+            System.out.println("UserEmail: " + dto.getUserEmail());
+            System.out.println("UserImageURL: " + dto.getUserImageURL());
+            System.out.println("CreatedAt: " + dto.getCreatedAt());*/
+
+            return dto;
+        } catch (Exception e) {
+            System.err.println("Error converting comment: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Transactional
+    public void deleteComment(Long commentId, Authentication authentication) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Comment not found with id: " + commentId));
+
+        // Get the current user
+        User currentUser = userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        // Check if the current user is the owner of the comment
+        if (!comment.getUser().getId().equals(currentUser.getId())) {
+            throw new UnauthorizedException("You can only delete your own comments");
+        }
+
+        commentRepository.deleteById(commentId);
     }
 }

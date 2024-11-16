@@ -6,23 +6,36 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "comment")
+@Table(name = "comments")
 public class Comment {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long commentID;
 
-    private Long recipeID;
-    private Long userID;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "recipeID", nullable = false)
+    private Recipe recipe;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "userID", nullable = false)
+    private User user;
+
+    @Column(nullable = false)
     private String content;
-    private Boolean isFlagged;
+
+
+    private Boolean isFlagged = false;
 
     @Column(nullable = false)
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;
 
-    // Getters and setters
+    @Transient
+    private String username;
+
+    public String getUsername() {
+        return user != null ? user.getUsername() : null;
+    }
 
     public Long getCommentID() {
         return commentID;
@@ -32,20 +45,20 @@ public class Comment {
         this.commentID = commentID;
     }
 
-    public Long getRecipeID() {
-        return recipeID;
+    public Recipe getRecipe() {
+        return recipe;
     }
 
-    public void setRecipeID(Long recipeID) {
-        this.recipeID = recipeID;
+    public void setRecipe(Recipe recipe) {
+        this.recipe = recipe;
     }
 
-    public Long getUserID() {
-        return userID;
+    public User getUser() {
+        return user;
     }
 
-    public void setUserID(Long userID) {
-        this.userID = userID;
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public String getContent() {
@@ -56,12 +69,12 @@ public class Comment {
         this.content = content;
     }
 
-    public Boolean getIsFlagged() {
+    public Boolean getFlagged() {
         return isFlagged;
     }
 
-    public void setIsFlagged(Boolean isFlagged) {
-        this.isFlagged = isFlagged;
+    public void setFlagged(Boolean flagged) {
+        isFlagged = flagged;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -70,5 +83,9 @@ public class Comment {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 }

@@ -6,6 +6,7 @@ import com.example.usersavorspace.services.JwtService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -73,6 +74,8 @@ public class SecurityConfiguration {
                         .requestMatchers("/auth/verify-token").authenticated()
                         .requestMatchers("/Pictures/**", "/uploads/**", "/oauth2/**").permitAll()
                         .requestMatchers("/admin/**").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/comments/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/api/comments/**").permitAll()
                         .requestMatchers("/users/change-password", "/users/*/reactivate").authenticated()
                         .anyRequest().authenticated()
                 )
