@@ -2,11 +2,13 @@ package com.example.usersavorspace.controllers;
 
 import com.example.usersavorspace.dtos.LoginResponse;
 import com.example.usersavorspace.dtos.LoginUserDto;
+import com.example.usersavorspace.dtos.PasswordResetRequest;
 import com.example.usersavorspace.entities.Contact;
 import com.example.usersavorspace.entities.User;
 import com.example.usersavorspace.services.AuthenticationService;
 import com.example.usersavorspace.services.EmailService;
 import com.example.usersavorspace.services.JwtService;
+import com.example.usersavorspace.services.UserService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -16,11 +18,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
 import java.util.Map;
+import java.util.Optional;
 
 @RequestMapping("/auth")
 @RestController
@@ -33,9 +37,41 @@ public class AuthenticationController {
     private final JwtService jwtService;
     private final AuthenticationService authenticationService;
 
-    public AuthenticationController(JwtService jwtService, AuthenticationService authenticationService) {
+    private final UserService userService;
+
+    public AuthenticationController(JwtService jwtService, AuthenticationService authenticationService, UserService userService) {
         this.jwtService = jwtService;
         this.authenticationService = authenticationService;
+        this.userService = userService;
+    }
+
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> resetPassword(@RequestBody PasswordResetRequest request) {
+        try {
+            Optional<User> userOptional = userService.findByEmail(request.getEmail());
+
+            if (userOptional.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "User not found"));
+            }
+
+            User user = userOptional.get();
+
+            // Encrypt the new password using BCryptPasswordEncoder
+            BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+            String encodedPassword = passwordEncoder.encode(request.getNewPassword());
+
+            // Update the user's password
+            user.setPassword(encodedPassword);
+            userService.save(user);
+
+            return ResponseEntity.ok()
+                    .body(Map.of("message", "Password reset successful"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Error resetting password"));
+        }
     }
 
     @PostMapping("/verify-token")

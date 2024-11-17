@@ -159,6 +159,5 @@ public class Recipe {
     public void setComments(Set<Comment> comments) {
         this.comments = comments;
     }
-
 }
 
