@@ -1,5 +1,6 @@
 package com.example.usersavorspace.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 @Entity
@@ -10,10 +11,12 @@ public class Rating {
 
     @ManyToOne
     @JoinColumn(name = "recipeid", nullable = false)
+    @JsonIgnoreProperties({"ratings", "hibernateLazyInitializer", "handler"})
     private Recipe recipe;
 
     @ManyToOne
     @JoinColumn(name = "userid", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User user;
 
     private int rating;
