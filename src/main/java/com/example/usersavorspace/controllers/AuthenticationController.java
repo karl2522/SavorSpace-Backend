@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -100,18 +101,26 @@ public class AuthenticationController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> authenticate(@RequestBody LoginUserDto loginUserDto) {
-        User authenticatedUser = authenticationService.authenticate(loginUserDto);
+        try {
+            User authenticatedUser = authenticationService.authenticate(loginUserDto);
 
-        String jwtToken = jwtService.generateToken(authenticatedUser);
-        String refreshToken = jwtService.generateRefreshToken(authenticatedUser);
+            if (!authenticatedUser.isActive()) {
+                throw new RuntimeException("Account is deactivated. Please reactivate your account!");
+            }
 
-        LoginResponse loginResponse = new LoginResponse()
-                .setToken(jwtToken)
-                .setRefreshToken(refreshToken)
-                .setExpiresIn(jwtService.getExpirationTime())
-                .setUserId(authenticatedUser.getId());
+            String jwtToken = jwtService.generateToken(authenticatedUser);
+            String refreshToken = jwtService.generateRefreshToken(authenticatedUser);
 
-        return ResponseEntity.ok(loginResponse);
+            LoginResponse loginResponse = new LoginResponse()
+                    .setToken(jwtToken)
+                    .setRefreshToken(refreshToken)
+                    .setExpiresIn(jwtService.getExpirationTime())
+                    .setUserId(authenticatedUser.getId());
+
+            return ResponseEntity.ok(loginResponse);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new LoginResponse());
+        }
     }
 
     @PostMapping("/refresh-token")
@@ -230,6 +239,18 @@ public class AuthenticationController {
         }catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/deactivated")
+    public ResponseEntity<?> getAllDeactivatedAccounts() {
+        try {
+            List<User> deactivatedUsers = userService.getAllDeactivatedAccounts();
+
+            return ResponseEntity.ok(deactivatedUsers);
+        } catch(Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).
+                    body(Map.of("error", e.getMessage()));
         }
     }
 }
