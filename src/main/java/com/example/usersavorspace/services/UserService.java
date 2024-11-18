@@ -140,4 +140,9 @@ public class UserService {
         }
     }
 
+
+    public List<User> getAllDeactivatedAccounts() {
+        return userRepository.findByActiveFalse();
+    }
+
 }
