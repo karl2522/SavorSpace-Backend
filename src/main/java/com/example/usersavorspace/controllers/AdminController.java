@@ -1,5 +1,6 @@
 package com.example.usersavorspace.controllers;
 
+import com.example.usersavorspace.dtos.UserStats;
 import com.example.usersavorspace.entities.User;
 import com.example.usersavorspace.services.UserService;
 import org.springframework.http.ResponseEntity;
@@ -38,16 +39,37 @@ public class AdminController {
     @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping("/users")
     public ResponseEntity<List<User>> allUsers() {
-        List<User> users = userService.allUsers();
-        return ResponseEntity.ok(users);
+        List<User> activeUsers = userService.findAllActiveUsers();
+        return ResponseEntity.ok(activeUsers);
     }
 
     @PreAuthorize("hasAuthority('ADMIN')")
-    @GetMapping("/me")
+    @GetMapping("/ad")
     public ResponseEntity<User> authenticatedAdmin() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User currentAdmin = (User) authentication.getPrincipal();
-        System.out.println("Authenticated admin: " + currentAdmin.getRole());
         return ResponseEntity.ok(currentAdmin);
+    }
+
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @GetMapping("/users/deleted")
+    public ResponseEntity<List<User>> allDeletedUsers() {
+        List<User> deletedUsers = userService.findAllDeletedUsers();
+        return ResponseEntity.ok(deletedUsers);
+    }
+
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @PutMapping("/users/{id}/restore")
+    public ResponseEntity<User> restoreUser(@PathVariable Integer id) {
+        User restoredUser = userService.restoreUser(id);
+        return ResponseEntity.ok(restoredUser);
+    }
+
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @GetMapping("/users/stats")
+    public ResponseEntity<UserStats> getUserStats() {
+        int activeCount = userService.findAllActiveUsers().size();
+        int deleteCount = userService.findAllDeletedUsers().size();
+        return ResponseEntity.ok(new UserStats(activeCount, deleteCount));
     }
 }

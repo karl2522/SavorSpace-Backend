@@ -1,8 +1,12 @@
 package com.example.usersavorspace.entities;
 
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -14,10 +18,13 @@ public class Comment {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "recipeID", nullable = false)
+    @JsonBackReference
     private Recipe recipe;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "userID", nullable = false)
+    @OnDelete(action = OnDeleteAction.NO_ACTION)
+    @JsonBackReference
     private User user;
 
     @Column(nullable = false)
@@ -25,6 +32,9 @@ public class Comment {
 
 
     private Boolean isFlagged = false;
+
+    @Column(nullable = false)
+    private boolean deleted = false;
 
     @Column(nullable = false)
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
@@ -35,6 +45,14 @@ public class Comment {
 
     public String getUsername() {
         return user != null ? user.getUsername() : null;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
     }
 
     public Long getCommentID() {

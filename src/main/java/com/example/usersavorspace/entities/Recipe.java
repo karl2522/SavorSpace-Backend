@@ -3,6 +3,7 @@ package com.example.usersavorspace.entities;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -36,9 +37,11 @@ public class Recipe {
     private String imageURL;
 
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private Set<Rating> ratings;
 
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private Set<Comment> comments;
 
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})

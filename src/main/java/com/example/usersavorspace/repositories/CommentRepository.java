@@ -16,4 +16,8 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     @Query("SELECT c FROM Comment c WHERE c.recipe.recipeID = :recipeId ORDER BY c.createdAt DESC")
     List<Comment> findByRecipeIdOrderByCreatedAtDesc(@Param("recipeId") Integer recipeId);
+
+    List<Comment> findByUserIdAndDeletedFalse(Integer userId);
+    List<Comment> findByUserId(Integer userId);
+    List<Comment> findByDeletedFalse();
 }
