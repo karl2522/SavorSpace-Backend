@@ -67,7 +67,7 @@ public class AuthenticationService {
     }
 
     public User authenticate(LoginUserDto input) {
-        User user = userRepository.findByEmail(input.getEmail())
+        User user = userRepository.findByEmailAndDeletedFalse(input.getEmail())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + input.getEmail()));
 
         if(!user.isActive()) {
@@ -104,7 +104,7 @@ public class AuthenticationService {
     }*/
 
     public User loadUserByUsername(String username) {
-        User user = userRepository.findByEmail(username)
+        User user = userRepository.findByEmailAndDeletedFalse(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + username));
 
         if(!user.isActive()) {
@@ -115,7 +115,7 @@ public class AuthenticationService {
     }
 
     public User reactivateAccount(String email, String password) {
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmailAndDeletedFalse(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
         if(!passwordEncoder.matches(password, user.getPassword())) {
@@ -131,7 +131,7 @@ public class AuthenticationService {
     }
 
     public User deactivateAccount(String email, String password) {
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmailAndDeletedFalse(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
         if(!passwordEncoder.matches(password, user.getPassword())) {
