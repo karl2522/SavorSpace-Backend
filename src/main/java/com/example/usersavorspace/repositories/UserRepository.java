@@ -4,6 +4,7 @@ import com.example.usersavorspace.entities.User;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,6 +18,9 @@ public interface UserRepository extends CrudRepository<User, Integer> {
     Optional<User> findByIdAndDeletedTrue(Integer id);
 
     Optional<User> findByIdAndDeletedFalse(Integer id);
+    Long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+    Long countByActiveTrueAndDeletedFalse();
 
     default List<User> findAllActiveUsers() {
         return findByActiveIsTrueAndRoleAndDeletedFalse("USER");
