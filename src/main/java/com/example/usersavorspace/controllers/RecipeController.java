@@ -92,6 +92,7 @@ public class RecipeController {
             UserDTO userDTO = new UserDTO();
             userDTO.setId(recipe.getUser().getId());
             userDTO.setUsername(recipe.getUser().getUsername());
+            userDTO.setFullName(recipe.getUser().getFullName());
 
             String userImageURL = recipe.getUser().getImageURL();
             if(userImageURL != null && !userImageURL.isEmpty()) {
