@@ -69,7 +69,7 @@ public class UserController {
             @RequestBody PasswordChangeDTO passwordChangeDTO,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        User user = userRepository.findByEmail(userDetails.getUsername())
+        User user = userRepository.findByEmailAndDeletedFalse(userDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         if (!passwordEncoder.matches(passwordChangeDTO.getOldPassword(), user.getPassword())) {

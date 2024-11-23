@@ -2,6 +2,7 @@ package com.example.usersavorspace.entities;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -9,10 +10,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Table(name = "users")
 @Entity
@@ -46,12 +44,18 @@ public class User implements UserDetails {
     private String role = "USER";
 
     @Column(nullable = false)
+    private boolean deleted = false;
+
+    @Column(nullable = false)
     private boolean active = true;
 
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "user", cascade = CascadeType.ALL)
     private List<Recipe> recipe;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonManagedReference
+    private List<Comment> comments = new ArrayList<>();
     // Getters and setters
 
     @Override
@@ -90,7 +94,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return isActive() && !isDeleted();
     }
 
     public Integer getId() {
@@ -165,5 +169,30 @@ public class User implements UserDetails {
     public User setActive(boolean active) {
         this.active = active;
         return this;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public User setDeleted(boolean deleted) {
+        this.deleted = deleted;
+        return this;
+    }
+
+    public List<Comment> getComments() {
+        return comments;
+    }
+
+    public void setComments(List<Comment> comments) {
+        this.comments = comments;
+    }
+
+    public void addComment(Comment comment) {
+        if (comments == null) {
+            comments = new ArrayList<>();
+        }
+        comments.add(comment);
+        comment.setUser(this);
     }
 }

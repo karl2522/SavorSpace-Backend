@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface CommentRepository extends JpaRepository<Comment, Long> {
@@ -16,4 +17,9 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     @Query("SELECT c FROM Comment c WHERE c.recipe.recipeID = :recipeId ORDER BY c.createdAt DESC")
     List<Comment> findByRecipeIdOrderByCreatedAtDesc(@Param("recipeId") Integer recipeId);
+
+    Long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+    List<Comment> findByUserIdAndDeletedFalse(Integer userId);
+    List<Comment> findByUserId(Integer userId);
+    List<Comment> findByDeletedFalse();
 }

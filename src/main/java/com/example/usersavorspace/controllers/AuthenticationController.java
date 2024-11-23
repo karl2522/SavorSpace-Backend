@@ -16,6 +16,8 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -100,12 +103,25 @@ public class AuthenticationController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> authenticate(@RequestBody LoginUserDto loginUserDto) {
+    public ResponseEntity<?> authenticate(@RequestBody LoginUserDto loginUserDto) {
         try {
             User authenticatedUser = authenticationService.authenticate(loginUserDto);
 
+            // Check for both deleted and inactive status
+            if (authenticatedUser.isDeleted()) {
+                return ResponseEntity
+                        .status(HttpStatus.UNAUTHORIZED)
+                        .body(new HashMap<String, String>() {{
+                            put("error", "Account has been deleted. Please contact administrator.");
+                        }});
+            }
+
             if (!authenticatedUser.isActive()) {
-                throw new RuntimeException("Account is deactivated. Please reactivate your account!");
+                return ResponseEntity
+                        .status(HttpStatus.UNAUTHORIZED)
+                        .body(new HashMap<String, String>() {{
+                            put("error", "Account is deactivated. Please reactivate your account!");
+                        }});
             }
 
             String jwtToken = jwtService.generateToken(authenticatedUser);
@@ -118,8 +134,25 @@ public class AuthenticationController {
                     .setUserId(authenticatedUser.getId());
 
             return ResponseEntity.ok(loginResponse);
+
+        } catch (BadCredentialsException e) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(new HashMap<String, String>() {{
+                        put("error", "Invalid email or password");
+                    }});
+        } catch (DisabledException e) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(new HashMap<String, String>() {{
+                        put("error", "Account is disabled");
+                    }});
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new LoginResponse());
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new HashMap<String, String>() {{
+                        put("error", e.getMessage());
+                    }});
         }
     }
 

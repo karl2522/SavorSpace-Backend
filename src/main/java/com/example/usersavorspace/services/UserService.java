@@ -1,7 +1,9 @@
 package com.example.usersavorspace.services;
 
 
+import com.example.usersavorspace.entities.Comment;
 import com.example.usersavorspace.entities.User;
+import com.example.usersavorspace.repositories.CommentRepository;
 import com.example.usersavorspace.repositories.UserRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,9 +23,10 @@ public class UserService {
     private final UserRepository userRepository;
     private final Path fileStorageLocation;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final CommentRepository commentRepository;
 
 
-    public UserService(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, CommentRepository commentRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.fileStorageLocation = Paths.get("uploads").toAbsolutePath().normalize();
@@ -33,6 +36,7 @@ public class UserService {
         }catch (Exception ex) {
             throw new RuntimeException("Could not create the directory where the uploaded files will be stored.", ex);
         }
+        this.commentRepository = commentRepository;
     }
 
     public User deactivateAccount(Integer userId, String password) {
@@ -60,7 +64,7 @@ public class UserService {
     }
 
     public Optional<User> findByEmail(String email) {
-        return userRepository.findByEmail(email);
+        return userRepository.findByEmailAndDeletedFalse(email);
     }
 
     public User save(User user) {
@@ -74,7 +78,22 @@ public class UserService {
     }
 
     public void deleteUser(Integer id) {
-        userRepository.deleteById(id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found id: " + id));
+
+
+        List<Comment> userComments = commentRepository.findByUserIdAndDeletedFalse(id);
+        if(userComments != null && !userComments.isEmpty()) {
+            userComments.forEach(comment -> {
+                comment.setDeleted(true);
+                commentRepository.save(comment);
+            });
+        }
+
+
+        user.setActive(false);
+        user.setDeleted(true);
+        userRepository.save(user);
     }
 
     public User adminUpdateUser(Integer id, User user) {
@@ -145,4 +164,28 @@ public class UserService {
         return userRepository.findByActiveFalse();
     }
 
+    public List<User> findAllActiveUsers() {
+        return userRepository.findByActiveIsTrueAndRoleAndDeletedFalse("USER");
+    }
+
+    public List<User> findAllDeletedUsers() {
+        return userRepository.findByDeletedTrueAndRole("USER");
+    }
+
+    public User restoreUser(Integer userId) {
+        User user = userRepository.findByIdAndDeletedTrue(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        List<Comment> userComments = commentRepository.findByUserIdAndDeletedFalse(userId);
+        if(userComments != null && !userComments.isEmpty()) {
+            userComments.forEach(comment -> {
+                comment.setDeleted(false);
+                commentRepository.save(comment);
+            });
+        }
+
+        user.setActive(true);
+        user.setDeleted(false);
+        return userRepository.save(user);
+    }
 }

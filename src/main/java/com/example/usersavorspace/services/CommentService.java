@@ -62,7 +62,7 @@ public class CommentService {
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Recipe not found with id: " + recipeId));
 
-        User user = userRepository.findByEmail(authentication.getName())
+        User user = userRepository.findByEmailAndDeletedFalse(authentication.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Comment comment = new Comment();
@@ -119,7 +119,7 @@ public class CommentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Comment not found with id: " + commentId));
 
         // Get the current user
-        User currentUser = userRepository.findByEmail(authentication.getName())
+        User currentUser = userRepository.findByEmailAndDeletedFalse(authentication.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Check if the current user is the owner of the comment
