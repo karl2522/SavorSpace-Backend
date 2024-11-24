@@ -128,4 +128,14 @@ public class RecipeController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/related/{recipeId}")
+    public ResponseEntity<List<RecipeDTO>> getRelatedRecipes(
+            @PathVariable int recipeId,
+            @RequestParam(defaultValue = "3") int limit) {
+        List<Recipe> relatedRecipes = recipeService.getRelatedRecipes(recipeId, limit);
+        List<RecipeDTO> relatedRecipeDTOs = relatedRecipes.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(relatedRecipeDTOs);
+    }
 }

@@ -20,8 +20,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -105,5 +105,40 @@ public class RecipeService {
         }
 
         recipeRepository.deleteById(recipeId);
+    }
+
+    public List<Recipe> getRelatedRecipes(int recipeId, int limit) {
+
+        Recipe currentRecipe = getRecipeById(recipeId);
+
+        return recipeRepository.findAll().stream()
+                .filter(recipe -> recipe.getRecipeID() != recipeId)
+                .filter(recipe -> {
+                    boolean similarIngredients = recipe.getIngredients() != null &&
+                            currentRecipe.getIngredients() != null &&
+                            calculatesSimilarity(recipe.getIngredients(), currentRecipe.getIngredients()) > 0.3;
+
+                    boolean similarTitle = recipe.getTitle() != null &&
+                            currentRecipe.getTitle() != null &&
+                            calculatesSimilarity(recipe.getTitle(), currentRecipe.getTitle()) > 0.3;
+
+                    return similarIngredients || similarTitle;
+                })
+                .limit(limit)
+                .collect(Collectors.toList());
+    }
+
+    private double calculatesSimilarity(String text1, String text2) {
+
+        Set<String> words1 = new HashSet<>(Arrays.asList(text1.toLowerCase().split("\\W+")));
+        Set<String> words2 = new HashSet<>(Arrays.asList(text2.toLowerCase().split("\\W+")));
+
+        Set<String> union = new HashSet<>(words1);
+        union.addAll(words2);
+
+        Set<String> intersection = new HashSet<>(words1);
+        intersection.retainAll(words2);
+
+        return union.isEmpty() ? 0 : (double) intersection.size() / union.size();
     }
 }
