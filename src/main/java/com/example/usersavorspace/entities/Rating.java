@@ -15,7 +15,7 @@ public class Rating {
     @ManyToOne
     @JoinColumn(name = "recipeid", nullable = false)
     @JsonIgnoreProperties({"ratings", "hibernateLazyInitializer", "handler"})
-    @JsonBackReference
+    @JsonBackReference("recipe-ratings")
     private Recipe recipe;
 
     @ManyToOne

@@ -18,13 +18,13 @@ public class Comment {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "recipeID", nullable = false)
-    @JsonBackReference
+    @JsonBackReference("recipe-comments")
     private Recipe recipe;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "userID", nullable = false)
     @OnDelete(action = OnDeleteAction.NO_ACTION)
-    @JsonBackReference
+    @JsonBackReference("user-comments")
     private User user;
 
     @Column(nullable = false)

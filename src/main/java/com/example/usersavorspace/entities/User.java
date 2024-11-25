@@ -54,7 +54,7 @@ public class User implements UserDetails {
     private List<Recipe> recipe;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    @JsonManagedReference
+    @JsonManagedReference("user-comments")
     private List<Comment> comments = new ArrayList<>();
     // Getters and setters
 

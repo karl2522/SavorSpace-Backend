@@ -37,11 +37,11 @@ public class Recipe {
     private String imageURL;
 
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
+    @JsonManagedReference("recipe-ratings")
     private Set<Rating> ratings;
 
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
+    @JsonManagedReference("recipe-comments")
     private Set<Comment> comments;
 
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
