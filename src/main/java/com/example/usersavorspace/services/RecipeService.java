@@ -141,4 +141,12 @@ public class RecipeService {
 
         return union.isEmpty() ? 0 : (double) intersection.size() / union.size();
     }
+
+    public List<Recipe> getLatestUserRecipes(Integer userId, int limit) {
+        return recipeRepository.findByUserIdOrderByCreatedAtDesc(userId, PageRequest.of(0, limit));
+    }
+
+    public List<Recipe> getPopularUserRecipes(Integer userId, int limit) {
+        return recipeRepository.findMostCommentedRecipesByUser(userId, PageRequest.of(0, limit));
+    }
 }

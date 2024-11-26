@@ -138,4 +138,26 @@ public class RecipeController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(relatedRecipeDTOs);
     }
+
+    @GetMapping("/user/{userId}/latest")
+    public ResponseEntity<List<RecipeDTO>> getLatestUserRecipes(
+            @PathVariable Integer userId,
+            @RequestParam(defaultValue = "2") int limit) {
+        List<Recipe> latestRecipes = recipeService.getLatestUserRecipes(userId, limit);
+        List<RecipeDTO> recipeDTOS = latestRecipes.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(recipeDTOS);
+    }
+
+    @GetMapping("/user/{userId}/popular")
+    public ResponseEntity<List<RecipeDTO>> getPopularUserRecipes(
+            @PathVariable Integer userId,
+            @RequestParam(defaultValue = "2") int limit) {
+        List<Recipe> popularRecipes = recipeService.getPopularUserRecipes(userId, limit);
+        List<RecipeDTO> recipeDTOS = popularRecipes.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(recipeDTOS);
+    }
 }
