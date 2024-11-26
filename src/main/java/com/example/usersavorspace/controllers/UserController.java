@@ -121,4 +121,23 @@ public class UserController {
                     .body(null);
         }
     }
+
+    @GetMapping("/{userId}/stats")
+    public ResponseEntity<Map<String, Long>> getUserStats(@PathVariable Integer userId) {
+        try {
+            long recipeCount = userService.getUserRecipeCount(userId);
+            long commentCount = userService.getUserCommentCount(userId);
+            long ratingCount = userService.getUserRatingCount(userId);
+
+            Map<String, Long> stats = Map.of(
+                    "recipeCount", recipeCount,
+                    "commentCount", commentCount,
+                    "ratingCount", ratingCount
+            );
+
+            return ResponseEntity.ok(stats);
+        }catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
 }

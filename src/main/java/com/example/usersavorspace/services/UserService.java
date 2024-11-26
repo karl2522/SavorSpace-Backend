@@ -4,6 +4,8 @@ package com.example.usersavorspace.services;
 import com.example.usersavorspace.entities.Comment;
 import com.example.usersavorspace.entities.User;
 import com.example.usersavorspace.repositories.CommentRepository;
+import com.example.usersavorspace.repositories.RatingRepository;
+import com.example.usersavorspace.repositories.RecipeRepository;
 import com.example.usersavorspace.repositories.UserRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,9 +26,11 @@ public class UserService {
     private final Path fileStorageLocation;
     private final BCryptPasswordEncoder passwordEncoder;
     private final CommentRepository commentRepository;
+    private final RecipeRepository recipeRepository;
+    private final RatingRepository ratingRepository;
 
 
-    public UserService(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, CommentRepository commentRepository) {
+    public UserService(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, CommentRepository commentRepository, RecipeRepository recipeRepository, RatingRepository ratingRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.fileStorageLocation = Paths.get("uploads").toAbsolutePath().normalize();
@@ -37,6 +41,8 @@ public class UserService {
             throw new RuntimeException("Could not create the directory where the uploaded files will be stored.", ex);
         }
         this.commentRepository = commentRepository;
+        this.recipeRepository = recipeRepository;
+        this.ratingRepository = ratingRepository;
     }
 
     public User deactivateAccount(Integer userId, String password) {
@@ -187,5 +193,17 @@ public class UserService {
         user.setActive(true);
         user.setDeleted(false);
         return userRepository.save(user);
+    }
+
+    public long getUserRecipeCount(Integer userId) {
+        return recipeRepository.countByUserId(userId);
+    }
+
+    public long getUserCommentCount(Integer userId) {
+        return commentRepository.countByUserId(userId);
+    }
+
+    public long getUserRatingCount(Integer userId) {
+        return ratingRepository.countByUserId(userId);
     }
 }

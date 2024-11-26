@@ -16,5 +16,6 @@ public interface RecipeRepository extends JpaRepository<Recipe, Integer> {
     Optional<Recipe> findByRecipeIDAndUser(int recipeID, User user);
     boolean existsByRecipeIDAndUser(int recipeID, User user);
     Long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+    long countByUserId(Integer userId);
 }
 
