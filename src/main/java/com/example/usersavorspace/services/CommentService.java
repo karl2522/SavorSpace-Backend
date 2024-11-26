@@ -10,6 +10,7 @@ import com.example.usersavorspace.repositories.CommentRepository;
 import com.example.usersavorspace.repositories.RecipeRepository;
 import com.example.usersavorspace.repositories.UserRepository;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @Transactional
 public class CommentService {
@@ -95,7 +97,7 @@ public class CommentService {
                 dto.setUserImageURL(user.getImageURL());
             }
 
-            dto.setFlagged(comment.getFlagged() != null ? comment.getFlagged() : false);
+            dto.setFlagged(Boolean.valueOf(comment.getFlagged()));
 
             // Debug logging
             /*System.out.println("Converting Comment to DTO:");
@@ -134,7 +136,15 @@ public class CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Comment not found"));
 
+        // Since we're using primitive boolean now, no need to check for null
         comment.setFlagged(!comment.getFlagged());
-        return commentRepository.save(comment);
+
+        log.info("Toggling flag for comment {}: {} -> {}", commentId, comment.getFlagged(), !comment.getFlagged());
+
+        Comment savedComment = commentRepository.save(comment);
+
+        log.info("Saved comment {} with flag status: {}", savedComment.getCommentID(), savedComment.getFlagged());
+
+        return savedComment;
     }
 }

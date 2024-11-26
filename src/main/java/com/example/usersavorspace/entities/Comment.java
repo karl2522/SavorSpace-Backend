@@ -31,7 +31,8 @@ public class Comment {
     private String content;
 
 
-    private Boolean isFlagged = false;
+    @Column(name = "is_flagged")
+    private boolean isFlagged = false;
 
     @Column(nullable = false)
     private boolean deleted = false;
@@ -87,11 +88,11 @@ public class Comment {
         this.content = content;
     }
 
-    public Boolean getFlagged() {
+    public boolean getFlagged() {
         return isFlagged;
     }
 
-    public void setFlagged(Boolean flagged) {
+    public void setFlagged(boolean flagged) {
         isFlagged = flagged;
     }
 
