@@ -129,4 +129,12 @@ public class CommentService {
 
         commentRepository.deleteById(commentId);
     }
+
+    public Comment toggleCommentFlag(Long commentId, Authentication authentication) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Comment not found"));
+
+        comment.setFlagged(!comment.getFlagged());
+        return commentRepository.save(comment);
+    }
 }

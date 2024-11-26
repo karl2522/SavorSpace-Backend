@@ -85,6 +85,22 @@ public class CommentController {
                     .body(new ErrorResponse("Error deleting comment: " + e.getMessage()));
         }
     }
+
+    @PutMapping("/{commentId}/flag")
+    public ResponseEntity<?> flagComment(@PathVariable Long commentId, Authentication authentication) {
+        try {
+            Comment updatedComment = commentService.toggleCommentFlag(commentId, authentication);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(updatedComment);
+        }catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse(e.getMessage()));
+        }catch (UnauthorizedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ErrorResponse(e.getMessage()));
+        }
+    }
 }
 
 class ErrorResponse {

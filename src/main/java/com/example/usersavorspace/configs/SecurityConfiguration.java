@@ -76,6 +76,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/admin/**").hasAuthority("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/comments/**").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/api/comments/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/comments/*/flag").authenticated()
                         .requestMatchers("/users/change-password", "/users/*/reactivate").authenticated()
                         .anyRequest().authenticated()
                 )
