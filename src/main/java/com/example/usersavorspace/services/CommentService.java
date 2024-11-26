@@ -147,4 +147,17 @@ public class CommentService {
 
         return savedComment;
     }
+
+    public List<CommentDTO> getFlaggedComments() {
+        return commentRepository.findByIsFlaggedTrue().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void deleteCommentByAdmin(Long commentId) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Comment not found with id: " + commentId));
+        commentRepository.deleteById(commentId);
+    }
 }

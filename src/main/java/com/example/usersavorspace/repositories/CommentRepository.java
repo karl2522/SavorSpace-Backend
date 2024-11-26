@@ -23,4 +23,5 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     List<Comment> findByUserId(Integer userId);
     List<Comment> findByDeletedFalse();
     long countByUserId(Integer userId);
+    List<Comment> findByIsFlaggedTrue();
 }

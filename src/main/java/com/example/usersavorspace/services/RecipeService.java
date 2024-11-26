@@ -107,6 +107,13 @@ public class RecipeService {
         recipeRepository.deleteById(recipeId);
     }
 
+    @Transactional
+    public void deleteRecipeByAdmin(int recipeId) {
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new RecipeNotFoundException("Recipe not found with id: " + recipeId));
+        recipeRepository.deleteById(recipeId);
+    }
+
     public List<Recipe> getRelatedRecipes(int recipeId, int limit) {
 
         Recipe currentRecipe = getRecipeById(recipeId);

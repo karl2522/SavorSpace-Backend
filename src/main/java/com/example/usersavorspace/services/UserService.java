@@ -1,6 +1,7 @@
 package com.example.usersavorspace.services;
 
 
+import com.example.usersavorspace.dtos.CommentDTO;
 import com.example.usersavorspace.entities.Comment;
 import com.example.usersavorspace.entities.User;
 import com.example.usersavorspace.repositories.CommentRepository;

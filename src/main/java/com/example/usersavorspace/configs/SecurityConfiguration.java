@@ -74,6 +74,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/auth/verify-token").authenticated()
                         .requestMatchers("/Pictures/**", "/uploads/**", "/oauth2/**").permitAll()
                         .requestMatchers("/admin/**").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/admin/comments/*", "/admin/recipes/*").hasAuthority("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/comments/**").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/api/comments/**").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/comments/*/flag").authenticated()

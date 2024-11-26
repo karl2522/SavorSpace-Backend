@@ -1,11 +1,13 @@
 package com.example.usersavorspace.controllers;
 
+import com.example.usersavorspace.dtos.CommentDTO;
 import com.example.usersavorspace.dtos.UserStats;
 import com.example.usersavorspace.entities.User;
 import com.example.usersavorspace.repositories.CommentRepository;
 import com.example.usersavorspace.repositories.RatingRepository;
 import com.example.usersavorspace.repositories.RecipeRepository;
 import com.example.usersavorspace.repositories.UserRepository;
+import com.example.usersavorspace.services.CommentService;
 import com.example.usersavorspace.services.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,13 +30,15 @@ public class AdminController {
     private final CommentRepository commentRepository;
     private final RecipeRepository recipeRepository;
     private final RatingRepository ratingRepository;
+    private final CommentService commentService;
 
-    public AdminController(UserService userService, UserRepository userRepository, CommentRepository commentRepository, RecipeRepository recipeRepository, RatingRepository ratingRepository) {
+    public AdminController(UserService userService, UserRepository userRepository, CommentRepository commentRepository, RecipeRepository recipeRepository, RatingRepository ratingRepository, CommentService commentService) {
         this.userService = userService;
         this.userRepository = userRepository;
         this.commentRepository = commentRepository;
         this.recipeRepository = recipeRepository;
         this.ratingRepository = ratingRepository;
+        this.commentService = commentService;
     }
 
     @PreAuthorize("hasAuthority('ADMIN')")
@@ -191,5 +195,26 @@ public class AdminController {
         ));
 
         return ResponseEntity.ok(data);
+    }
+
+    @GetMapping("/flagged-comments")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<List<CommentDTO>> getFlaggedComments() {
+        List<CommentDTO> flaggedComments = commentService.getFlaggedComments();
+        return ResponseEntity.ok(flaggedComments);
+    }
+
+    @DeleteMapping("/comments/{commentId}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<Void> deleteComment(@PathVariable Long commentId) {
+        commentService.deleteCommentByAdmin(commentId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/recipes/{recipeId}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<Void> deleteRecipe(@PathVariable Integer recipeId) {
+        recipeRepository.deleteById(recipeId);
+        return ResponseEntity.noContent().build();
     }
 }
