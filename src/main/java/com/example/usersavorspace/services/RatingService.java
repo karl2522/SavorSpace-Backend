@@ -27,6 +27,9 @@ public class RatingService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private NotificationService notificationService;
+
     @Transactional
     public RatingDTO addOrUpdateRating(Integer userId, Integer recipeId, int rating) {
         // Validate rating value
@@ -38,6 +41,8 @@ public class RatingService {
         Rating ratingEntity = ratingRepository
                 .findByUserIdAndRecipeRecipeID(userId, recipeId)
                 .orElse(new Rating());
+
+        boolean isNewRating = ratingEntity.getRatingID() == null;
 
         // Get user and recipe
         User user = userRepository.findById(userId)
@@ -61,6 +66,10 @@ public class RatingService {
         // Update recipe's average rating
         recipe.setAverageRating(averageRating != null ? averageRating : 0.0);
         recipeRepository.save(recipe);
+
+        if(isNewRating && !user.getId().equals(recipe.getUser().getId())) {
+            notificationService.createRatingNotification(recipe.getUser(), recipe, user.getFullName());
+        }
 
         // Create and return DTO
         return createRatingDTO(ratingEntity, averageRating, totalRatings);

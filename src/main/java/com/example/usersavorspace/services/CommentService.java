@@ -35,6 +35,9 @@ public class CommentService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private NotificationService notificationService;
+
     @Transactional
     public List<CommentDTO> getCommentsByRecipe(Integer recipeId) {
         try {
@@ -75,6 +78,15 @@ public class CommentService {
         comment.setFlagged(false);
 
         Comment savedComment = commentRepository.save(comment);
+
+        if(!user.getId().equals(recipe.getUser().getId())) {
+            notificationService.createCommentNotification(
+                    recipe.getUser(),
+                    recipe,
+                    user.getFullName()
+            );
+        }
+
         return convertToDTO(savedComment);
     }
 
