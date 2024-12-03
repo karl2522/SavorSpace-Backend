@@ -8,6 +8,8 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "comments")
@@ -31,8 +33,16 @@ public class Comment {
     private String content;
 
 
-    @Column(name = "is_flagged")
-    private boolean isFlagged = false;
+    //@Column(name = "is_flagged")
+    //private boolean isFlagged = false;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "comment_flags",
+            joinColumns = @JoinColumn(name = "comment_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User> flaggedByUsers = new HashSet<>();
 
     @Column(nullable = false)
     private boolean deleted = false;
@@ -88,13 +98,13 @@ public class Comment {
         this.content = content;
     }
 
-    public boolean getFlagged() {
-        return isFlagged;
-    }
 
-    public void setFlagged(boolean flagged) {
+    /*public boolean getFlagged() {
+        return isFlagged;
+    }*/
+    /*public void setFlagged(boolean flagged) {
         isFlagged = flagged;
-    }
+    }*/
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
@@ -106,5 +116,34 @@ public class Comment {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public void addFlag(User user) {
+        flaggedByUsers.add(user);
+    }
+
+    public void removeFlag(User user) {
+        flaggedByUsers.remove(user);
+    }
+
+    public boolean isFlaggedByUser(User user) {
+        return flaggedByUsers.contains(user);
+    }
+
+    public int getFlagCount() {
+        return flaggedByUsers.size();
+    }
+
+    public Set<User> getFlaggedByUsers() {
+        return flaggedByUsers;
+    }
+
+    public void setFlaggedByUsers(Set<User> flaggedByUsers) {
+        this.flaggedByUsers = flaggedByUsers;
+    }
+
+    // Remove or modify the old getFlagged/setFlagged methods
+    public boolean getFlagged() {
+        return !flaggedByUsers.isEmpty();
     }
 }

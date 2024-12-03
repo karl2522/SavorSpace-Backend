@@ -75,7 +75,6 @@ public class CommentService {
         comment.setRecipe(recipe);
         comment.setUser(user);
         comment.setCreatedAt(LocalDateTime.now());
-        comment.setFlagged(false);
 
         Comment savedComment = commentRepository.save(comment);
 
@@ -109,7 +108,9 @@ public class CommentService {
                 dto.setUserImageURL(user.getImageURL());
             }
 
-            dto.setFlagged(Boolean.valueOf(comment.getFlagged()));
+            dto.setFlaggedByUsers(comment.getFlaggedByUsers());
+            dto.setFlagCount(comment.getFlaggedByUsers().size());
+            dto.setFlagged(!comment.getFlaggedByUsers().isEmpty());
 
             // Debug logging
             /*System.out.println("Converting Comment to DTO:");
@@ -148,23 +149,25 @@ public class CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Comment not found"));
 
-        // Since we're using primitive boolean now, no need to check for null
-        comment.setFlagged(!comment.getFlagged());
+        User currentUser = userRepository.findByEmailAndDeletedFalse(authentication.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        log.info("Toggling flag for comment {}: {} -> {}", commentId, comment.getFlagged(), !comment.getFlagged());
+        if (comment.isFlaggedByUser(currentUser)) {
+            comment.removeFlag(currentUser);
+        } else {
+            comment.addFlag(currentUser);
+        }
 
-        Comment savedComment = commentRepository.save(comment);
-
-        log.info("Saved comment {} with flag status: {}", savedComment.getCommentID(), savedComment.getFlagged());
-
-        return savedComment;
+        return commentRepository.save(comment);
     }
 
     public List<CommentDTO> getFlaggedComments() {
-        return commentRepository.findByIsFlaggedTrue().stream()
+        return commentRepository.findAll().stream()
+                .filter(comment -> !comment.getFlaggedByUsers().isEmpty())
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
+
 
     @Transactional
     public void deleteCommentByAdmin(Long commentId) {

@@ -1,6 +1,10 @@
 package com.example.usersavorspace.dtos;
 
+import com.example.usersavorspace.entities.User;
+
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 public class CommentDTO {
     private Long commentID;
@@ -11,7 +15,18 @@ public class CommentDTO {
     private String userImageURL;
     private String content;
     private LocalDateTime createdAt;
-    private Boolean flagged;
+    private int flagCount;
+    private boolean flagged;
+    private Set<User> flaggedByUsers = new HashSet<>();
+
+
+    public Set<User> getFlaggedByUsers() {
+        return flaggedByUsers;
+    }
+
+    public void setFlaggedByUsers(Set<User> flaggedByUsers) {
+        this.flaggedByUsers = flaggedByUsers;
+    }
 
     // Getters and Setters
     public Long getCommentID() { return commentID; }
@@ -40,6 +55,9 @@ public class CommentDTO {
 
     public Boolean getFlagged() { return flagged; }
     public void setFlagged(Boolean flagged) { this.flagged = flagged; }
+
+    public int getFlagCount() { return flagCount; }
+    public void setFlagCount(int flagCount) { this.flagCount = flagCount; }
 
     @Override
     public String toString() {
