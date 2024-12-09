@@ -38,6 +38,14 @@ public class Recipe {
     @Column(name = "image_url")
     private String imageURL;
 
+    @OneToMany(mappedBy = "originalRecipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private Set<RecipeVersion> originalVersions;
+
+    @OneToMany(mappedBy = "forkedRecipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private Set<RecipeVersion> forkedVersions;
+
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private Set<Rating> ratings;
@@ -186,6 +194,22 @@ public class Recipe {
 
     public void setFavorites(Set<Favorite> favorites) {
         this.favorites = favorites;
+    }
+
+    public Set<RecipeVersion> getOriginalVersions() {
+        return originalVersions;
+    }
+
+    public void setOriginalVersions(Set<RecipeVersion> originalVersions) {
+        this.originalVersions = originalVersions;
+    }
+
+    public Set<RecipeVersion> getForkedVersions() {
+        return forkedVersions;
+    }
+
+    public void setForkedVersions(Set<RecipeVersion> forkedVersions) {
+        this.forkedVersions = forkedVersions;
     }
 }
 
