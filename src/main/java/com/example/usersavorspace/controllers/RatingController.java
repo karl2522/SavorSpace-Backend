@@ -24,25 +24,30 @@ public class RatingController {
 
     @PostMapping("/rate")
     public ResponseEntity<RatingDTO> rateRecipe(
-            @RequestParam Integer recipeId,  // Changed from recipeID to match service
+            @RequestParam Integer recipeId,
             @RequestParam int rating,
             Authentication authentication) {
-        User user = (User) authentication.getPrincipal();
-        RatingDTO ratingDTO = ratingService.addOrUpdateRating(user.getId(), recipeId, rating);
-        return ResponseEntity.ok(ratingDTO);
+        try {
+            User user = (User) authentication.getPrincipal();
+            RatingDTO ratingDTO = ratingService.addOrUpdateRating(user.getId(), recipeId, rating);
+            return ResponseEntity.ok(ratingDTO);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(null);
+        }
     }
 
     @GetMapping("/recipe/{recipeId}")
     public ResponseEntity<RatingDTO> getRating(
-            @PathVariable Integer recipeId,  // Changed from recipeID
+            @PathVariable Integer recipeId,
             Authentication authentication) {
-        User user = (User) authentication.getPrincipal();
-        RatingDTO ratingDTO = ratingService.getRatingForRecipe(recipeId, user.getId());
-        return ResponseEntity.ok(ratingDTO);
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleException(Exception e) {
-        return ResponseEntity.badRequest().body(e.getMessage());
+        try {
+            User user = (User) authentication.getPrincipal();
+            RatingDTO ratingDTO = ratingService.getRatingForRecipe(recipeId, user.getId());
+            return ResponseEntity.ok(ratingDTO);
+        } catch (Exception e) {
+            // If there's no authentication, still return average rating
+            RatingDTO ratingDTO = ratingService.getAverageRatingForRecipe(recipeId);
+            return ResponseEntity.ok(ratingDTO);
+        }
     }
 }

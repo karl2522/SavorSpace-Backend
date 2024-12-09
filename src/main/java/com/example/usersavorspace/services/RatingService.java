@@ -32,47 +32,40 @@ public class RatingService {
 
     @Transactional
     public RatingDTO addOrUpdateRating(Integer userId, Integer recipeId, int rating) {
-        // Validate rating value
         if (rating < 1 || rating > 5) {
             throw new IllegalArgumentException("Rating must be between 1 and 5");
         }
 
-        // Find or create rating
+        // Find existing rating or create new one
         Rating ratingEntity = ratingRepository
                 .findByUserIdAndRecipeRecipeID(userId, recipeId)
                 .orElse(new Rating());
 
         boolean isNewRating = ratingEntity.getRatingID() == null;
 
-        // Get user and recipe
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with ID: " + userId));
-
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
         Recipe recipe = recipeRepository.findById(recipeId)
-                .orElseThrow(() -> new EntityNotFoundException("Recipe not found with ID: " + recipeId));
+                .orElseThrow(() -> new EntityNotFoundException("Recipe not found"));
 
-        // Set rating properties
+        // Update rating
         ratingEntity.setUser(user);
         ratingEntity.setRecipe(recipe);
         ratingEntity.setRating(rating);
-
-        // Save rating
         ratingEntity = ratingRepository.save(ratingEntity);
 
-        // Get updated statistics
-        Double averageRating = ratingRepository.getAverageRatingForRecipe(recipeId);
-        Integer totalRatings = ratingRepository.countByRecipeRecipeID(recipeId);
-
         // Update recipe's average rating
+        Double averageRating = ratingRepository.getAverageRatingForRecipe(recipeId);
         recipe.setAverageRating(averageRating != null ? averageRating : 0.0);
         recipeRepository.save(recipe);
 
-        if(isNewRating && !user.getId().equals(recipe.getUser().getId())) {
+        // Create notification if it's a new rating
+        if (isNewRating && !user.getId().equals(recipe.getUser().getId())) {
             notificationService.createRatingNotification(recipe.getUser(), recipe, user.getFullName());
         }
 
-        // Create and return DTO
-        return createRatingDTO(ratingEntity, averageRating, totalRatings);
+        return createRatingDTO(ratingEntity, averageRating,
+                ratingRepository.countByRecipeRecipeID(recipeId));
     }
 
     public RatingDTO getRatingForRecipe(Integer recipeId, Integer userId) {
@@ -84,6 +77,17 @@ public class RatingService {
         Integer totalRatings = ratingRepository.countByRecipeRecipeID(recipeId);
 
         return createRatingDTO(rating, averageRating, totalRatings);
+    }
+
+    public RatingDTO getAverageRatingForRecipe(Integer recipeId) {
+        Double averageRating = ratingRepository.getAverageRatingForRecipe(recipeId);
+        Integer totalRatings = ratingRepository.countByRecipeRecipeID(recipeId);
+
+        RatingDTO dto = new RatingDTO();
+        dto.setRecipeID(recipeId);
+        dto.setAverageRating(averageRating != null ? averageRating : 0.0);
+        dto.setTotalRatings(totalRatings != null ? totalRatings : 0);
+        return dto;
     }
 
     private RatingDTO createRatingDTO(Rating rating, Double averageRating, Integer totalRatings) {

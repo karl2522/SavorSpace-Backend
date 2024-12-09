@@ -58,5 +58,7 @@ public class RatingDTO {
         this.totalRatings = totalRatings;
     }
 
-
+    public boolean getHasUserRated() {
+        return ratingID != null && rating > 0;
+    }
 }
