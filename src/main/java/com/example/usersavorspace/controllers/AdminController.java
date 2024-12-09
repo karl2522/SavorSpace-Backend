@@ -2,12 +2,14 @@ package com.example.usersavorspace.controllers;
 
 import com.example.usersavorspace.dtos.CommentDTO;
 import com.example.usersavorspace.dtos.UserStats;
+import com.example.usersavorspace.entities.Report;
 import com.example.usersavorspace.entities.User;
 import com.example.usersavorspace.repositories.CommentRepository;
 import com.example.usersavorspace.repositories.RatingRepository;
 import com.example.usersavorspace.repositories.RecipeRepository;
 import com.example.usersavorspace.repositories.UserRepository;
 import com.example.usersavorspace.services.CommentService;
+import com.example.usersavorspace.services.ReportService;
 import com.example.usersavorspace.services.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -31,14 +33,16 @@ public class AdminController {
     private final RecipeRepository recipeRepository;
     private final RatingRepository ratingRepository;
     private final CommentService commentService;
+    private final ReportService reportService;
 
-    public AdminController(UserService userService, UserRepository userRepository, CommentRepository commentRepository, RecipeRepository recipeRepository, RatingRepository ratingRepository, CommentService commentService) {
+    public AdminController(UserService userService, UserRepository userRepository, CommentRepository commentRepository, RecipeRepository recipeRepository, RatingRepository ratingRepository, CommentService commentService, ReportService reportService) {
         this.userService = userService;
         this.userRepository = userRepository;
         this.commentRepository = commentRepository;
         this.recipeRepository = recipeRepository;
         this.ratingRepository = ratingRepository;
         this.commentService = commentService;
+        this.reportService = reportService;
     }
 
     @PreAuthorize("hasAuthority('ADMIN')")
@@ -214,7 +218,43 @@ public class AdminController {
     @DeleteMapping("/recipes/{recipeId}")
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Void> deleteRecipe(@PathVariable Integer recipeId) {
-        recipeRepository.deleteById(recipeId);
-        return ResponseEntity.noContent().build();
+        try {
+            // First delete all reports associated with this recipe
+            reportService.deleteReportsByRecipeId(recipeId);
+            // Then delete the recipe
+            recipeRepository.deleteById(recipeId);
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            throw new RuntimeException("Error deleting recipe: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/reported-recipes")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<List<Report>> getReportedRecipes() {
+        List<Report> reportedRecipes = reportService.getAllPendingReports();
+        return ResponseEntity.ok(reportedRecipes);
+    }
+
+    @PutMapping("/reports/{reportId}/status")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<Report> updateReportStatus(
+            @PathVariable Integer reportId,
+            @RequestBody Map<String, String> status) {
+        Report updatedReport = reportService.updateReportStatus(reportId, status.get("status"));
+        return ResponseEntity.ok(updatedReport);
+    }
+
+    @DeleteMapping("/reports/{reportId}/recipe/{recipeId}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<Void> deleteReportAndRecipe(
+            @PathVariable Integer reportId,
+            @PathVariable Integer recipeId) {
+        try {
+            reportService.handleRecipeDelete(reportId, recipeId);
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            throw new RuntimeException("Error deleting recipe and report: " + e.getMessage());
+        }
     }
 }
