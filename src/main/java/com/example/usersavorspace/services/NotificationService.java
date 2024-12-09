@@ -32,6 +32,32 @@ public class NotificationService {
         );
     }
 
+    public void createFavoriteNotification(User recipient, Recipe recipe, String favoriterName) {
+        Notification notification = new Notification();
+        notification.setRecipient(recipient);
+        notification.setType("FAVORITE");
+        notification.setMessage(favoriterName + " added your recipe to their favorites: " + recipe.getTitle());
+        notification.setRecipeId(recipe.getRecipeID());
+        notification.setCreatedAt(LocalDateTime.now());
+        notification.setRead(false);
+
+        notification = notificationRepository.save(notification);
+        sendNotification(recipient.getUsername(), notification);
+    }
+
+    public void createReportNotification(User recipient, Recipe recipe, String reporterName) {
+        Notification notification = new Notification();
+        notification.setRecipient(recipient);
+        notification.setType("REPORT");
+        notification.setMessage("Your recipe has been reported: " + recipe.getTitle());
+        notification.setRecipeId(recipe.getRecipeID());
+        notification.setCreatedAt(LocalDateTime.now());
+        notification.setRead(false);
+
+        notification = notificationRepository.save(notification);
+        sendNotification(recipient.getUsername(), notification);
+    }
+
     public void createCommentNotification(User recipient, Recipe recipe, String commenterName) {
         Notification notification = new Notification();
         notification.setRecipient(recipient);
@@ -72,5 +98,4 @@ public class NotificationService {
             notificationRepository.save(notification);
         });
     }
-
 }

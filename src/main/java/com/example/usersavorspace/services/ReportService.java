@@ -19,12 +19,14 @@ public class ReportService {
     private final ReportRepository reportRepository;
     private final RecipeRepository recipeRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     @Autowired
-    public ReportService(ReportRepository reportRepository, RecipeRepository recipeRepository, UserRepository userRepository) {
+    public ReportService(ReportRepository reportRepository, RecipeRepository recipeRepository, UserRepository userRepository, NotificationService notificationService) {
         this.reportRepository = reportRepository;
         this.recipeRepository = recipeRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     public Report createReport(Integer recipeId, Integer userId, String reason) {
@@ -45,6 +47,12 @@ public class ReportService {
         report.setReason(reason);
         report.setCreatedAt(LocalDateTime.now());
         report.setStatus("PENDING");
+
+        notificationService.createReportNotification(
+                recipe.getUser(),
+                recipe,
+                user.getUsername()
+        );
 
         return reportRepository.save(report);
     }

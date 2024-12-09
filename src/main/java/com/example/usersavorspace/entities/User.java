@@ -36,6 +36,10 @@ public class User implements UserDetails {
     @Column(updatable = false, name = "created_at")
     private Date createdAt;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private Set<Favorite> favorites;
+
     @UpdateTimestamp
     @Column(name = "updated_at")
     private Date updatedAt;
@@ -51,10 +55,11 @@ public class User implements UserDetails {
 
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Recipe> recipe;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    @JsonManagedReference("user-comments")
+    @JsonIgnore
     private List<Comment> comments = new ArrayList<>();
     // Getters and setters
 
@@ -194,5 +199,21 @@ public class User implements UserDetails {
         }
         comments.add(comment);
         comment.setUser(this);
+    }
+
+    public Set<Favorite> getFavorites() {
+        return favorites;
+    }
+
+    public void setFavorites(Set<Favorite> favorites) {
+        this.favorites = favorites;
+    }
+
+    public List<Recipe> getRecipe() {
+        return recipe;
+    }
+
+    public void setRecipe(List<Recipe> recipe) {
+        this.recipe = recipe;
     }
 }
