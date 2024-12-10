@@ -11,11 +11,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
@@ -38,6 +40,7 @@ public class RecipeController {
             @RequestParam("ingredients") String ingredients,
             @RequestParam("instructions") String instructions,
             @RequestParam(value = "image", required = false) MultipartFile image,
+            @RequestParam(value = "video", required = false) MultipartFile video,
             @RequestAttribute("userId") Integer userId) {
 
         try {
@@ -47,7 +50,7 @@ public class RecipeController {
             recipe.setIngredients(ingredients);
             recipe.setInstructions(instructions);
 
-            Recipe created = recipeService.addRecipe(recipe, userId, image);
+            Recipe created = recipeService.addRecipe(recipe, userId, image, video);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
         }catch (Exception e) {
             throw new ResponseStatusException(
@@ -56,6 +59,17 @@ public class RecipeController {
                     e
             );
         }
+    }
+
+    @GetMapping("/images")
+    public ResponseEntity<List<RecipeDTO>> getAllImageRecipes(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<Recipe> recipes = recipeService.getAllImageRecipes(page, size);
+        List<RecipeDTO> recipeDTOS = recipes.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(recipeDTOS);
     }
 
     @GetMapping
@@ -68,6 +82,7 @@ public class RecipeController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(recipeDTOS);
     }
+
 
     private RecipeDTO convertToDTO(Recipe recipe) {
         RecipeDTO dto = new RecipeDTO();
@@ -108,6 +123,12 @@ public class RecipeController {
             dto.setUser(userDTO);
         }
 
+        String videoURL = recipe.getVideoURL();
+        if(videoURL != null && !videoURL.isEmpty()) {
+            videoURL = videoURL.replaceAll("/uploads/+", "/uploads/");
+            dto.setVideoURL(videoURL);
+        }
+
         return dto;
     }
 
@@ -117,15 +138,37 @@ public class RecipeController {
     }
 
     @PutMapping("/{recipeId}")
-    public ResponseEntity<Recipe> updateRecipe(@PathVariable int recipeId,
-                                               @RequestBody Recipe recipe,
-                                               @RequestAttribute("userId") Integer userId) {
-        return ResponseEntity.ok(recipeService.updateRecipe(recipeId, recipe, userId));
+    public ResponseEntity<Recipe> updateRecipe(
+            @PathVariable int recipeId,
+            @RequestParam("title") String title,
+            @RequestParam("description") String description,
+            @RequestParam("ingredients") String ingredients,
+            @RequestParam("instructions") String instructions,
+            @RequestParam(value = "video", required = false) MultipartFile video,
+            @RequestAttribute("userId") Integer userId) {
+
+        try {
+            Recipe recipe = new Recipe();
+            recipe.setTitle(title);
+            recipe.setDescription(description);
+            recipe.setIngredients(ingredients);
+            recipe.setInstructions(instructions);
+
+            Recipe updated = recipeService.updateRecipe(recipeId, recipe, userId, video);
+            return ResponseEntity.ok(updated);
+        } catch (Exception e) {
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Error updating recipe",
+                    e
+            );
+        }
     }
 
     @DeleteMapping("/{recipeId}")
-    public ResponseEntity<Void> deleteRecipe(@PathVariable int recipeId,
-                                             @RequestAttribute("userId") Integer userId) {
+    public ResponseEntity<Void> deleteRecipe(
+            @PathVariable int recipeId,
+            @RequestAttribute("userId") Integer userId) {
         recipeService.deleteRecipe(recipeId, userId);
         return ResponseEntity.noContent().build();
     }
@@ -173,5 +216,48 @@ public class RecipeController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(recipeDTOs);
+    }
+
+    @GetMapping("/videos")
+    public ResponseEntity<List<RecipeDTO>> getAllVideoRecipes(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<Recipe> videoRecipes = recipeService.getAllVideoRecipes(page, size);
+        List<RecipeDTO> recipeDTOS = videoRecipes.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(recipeDTOS);
+    }
+
+    @PostMapping("/video")
+    public DeferredResult<ResponseEntity<Recipe>> addVideoRecipe(
+            @RequestParam("title") String title,
+            @RequestParam("description") String description,
+            @RequestParam("ingredients") String ingredients,
+            @RequestParam("instructions") String instructions,
+            @RequestParam("video") MultipartFile video,
+            @RequestParam(value = "image", required = false) MultipartFile image,
+            @RequestAttribute("userId") Integer userId) {
+
+        DeferredResult<ResponseEntity<Recipe>> deferredResult = new DeferredResult<>(180000L); // 3 minutes timeout
+
+        CompletableFuture.runAsync(() -> {
+            try {
+                Recipe recipe = new Recipe();
+                recipe.setTitle(title);
+                recipe.setDescription(description);
+                recipe.setIngredients(ingredients);
+                recipe.setInstructions(instructions);
+
+                Recipe created = recipeService.addRecipe(recipe, userId, image, video);
+                deferredResult.setResult(ResponseEntity.status(HttpStatus.CREATED).body(created));
+            } catch (Exception e) {
+                deferredResult.setErrorResult(
+                        new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error creating recipe", e)
+                );
+            }
+        });
+
+        return deferredResult;
     }
 }

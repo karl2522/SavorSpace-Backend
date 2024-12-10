@@ -80,6 +80,9 @@ public class Recipe {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "video_url")
+    private String videoURL;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -224,6 +227,14 @@ public class Recipe {
 
     public void setMealPlans(List<MealPlan> mealPlans) {
         this.mealPlans = mealPlans;
+    }
+
+    public String getVideoURL() {
+        return videoURL;
+    }
+
+    public void setVideoURL(String videoURL) {
+        this.videoURL = videoURL;
     }
 }
 

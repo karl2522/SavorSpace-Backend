@@ -13,6 +13,7 @@ public class RecipeDTO {
     private UserDTO user;
     private String createdAt;
     private LocalDateTime updatedAt;
+    private String videoURL;
 
     public int getRecipeID() {
         return recipeID;
@@ -84,5 +85,13 @@ public class RecipeDTO {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getVideoURL() {
+        return videoURL;
+    }
+
+    public void setVideoURL(String videoURL) {
+        this.videoURL = videoURL;
     }
 }

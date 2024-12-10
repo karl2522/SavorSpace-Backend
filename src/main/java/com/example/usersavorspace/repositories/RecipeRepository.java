@@ -29,5 +29,10 @@ public interface RecipeRepository extends JpaRepository<Recipe, Integer> {
     List<Recipe> findMostCommentedRecipesByUser(Integer userId, Pageable pageable);
 
     List<Recipe> findByUserIdOrderByCreatedAtDesc(Integer userId);
+
+    Page<Recipe> findByVideoURLIsNotNullOrderByCreatedAtDesc(Pageable pageable);
+
+    Page<Recipe> findByVideoURLIsNullOrderByCreatedAtDesc(Pageable pageable);
+
 }
 

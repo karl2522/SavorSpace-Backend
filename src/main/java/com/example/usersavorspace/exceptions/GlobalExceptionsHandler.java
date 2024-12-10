@@ -2,8 +2,10 @@ package com.example.usersavorspace.exceptions;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.security.SignatureException;
+import org.apache.catalina.connector.ClientAbortException;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AccountStatusException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -56,5 +58,11 @@ public class GlobalExceptionsHandler {
         }
 
         return errorDetail;
+    }
+
+    @ExceptionHandler(ClientAbortException.class)
+    public ResponseEntity<String> handleClientAbortException(ClientAbortException e) {
+        // Just log it and return null - this is expected behavior for aborted uploads
+        return null;
     }
 }

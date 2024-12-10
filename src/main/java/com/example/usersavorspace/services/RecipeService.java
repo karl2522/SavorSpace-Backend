@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -49,7 +50,7 @@ public class RecipeService {
     }
 
     @Transactional
-    public Recipe addRecipe(Recipe recipe, Integer userId, MultipartFile image) {
+    public Recipe addRecipe(Recipe recipe, Integer userId, MultipartFile image, MultipartFile video) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
@@ -64,6 +65,19 @@ public class RecipeService {
                 throw new RuntimeException("Could not store file " + fileName + ". Please try again!", ex);
             }
         }
+
+        if(video != null && !video.isEmpty()) {
+            String videoFileName = System.currentTimeMillis() + "_video_" + video.getOriginalFilename();
+            Path videoTargetLocation = this.fileStorageLocation.resolve(videoFileName);
+
+            try {
+                Files.copy(video.getInputStream(), videoTargetLocation);
+                recipe.setVideoURL("/uploads/" + videoFileName);
+            } catch (IOException ex) {
+                throw new RuntimeException("Could not store video " + videoFileName + ". Please try again!", ex);
+            }
+        }
+
         recipe.setUser(user);
         recipe.setCreatedAt(LocalDateTime.now());
         return recipeRepository.save(recipe);
@@ -80,8 +94,7 @@ public class RecipeService {
                 .orElseThrow(() -> new RecipeNotFoundException("Recipe not found with id: " + recipeId));
     }
 
-    public Recipe updateRecipe(int recipeId, Recipe recipe, Integer userId) {
-
+    public Recipe updateRecipe(int recipeId, Recipe recipe, Integer userId, MultipartFile video) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
@@ -92,32 +105,59 @@ public class RecipeService {
         existingRecipe.setDescription(recipe.getDescription());
         existingRecipe.setIngredients(recipe.getIngredients());
         existingRecipe.setInstructions(recipe.getInstructions());
-        existingRecipe.setImageURL(recipe.getImageURL());
         existingRecipe.setUpdatedAt(LocalDateTime.now());
+
+        // Handle video update if provided
+        if (video != null && !video.isEmpty()) {
+            try {
+                // Delete old video if exists
+                if (existingRecipe.getVideoURL() != null) {
+                    Path oldVideoPath = Paths.get("uploads", existingRecipe.getVideoURL().replaceFirst("/uploads/", ""));
+                    Files.deleteIfExists(oldVideoPath);
+                }
+
+                // Save new video
+                String fileName = UUID.randomUUID().toString() + "_" + video.getOriginalFilename();
+                Path uploadPath = Paths.get("uploads");
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                }
+                Path filePath = uploadPath.resolve(fileName);
+                Files.copy(video.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+                existingRecipe.setVideoURL("/uploads/" + fileName);
+            } catch (IOException e) {
+                throw new RuntimeException("Could not store the video file. Error: " + e.getMessage());
+            }
+        }
 
         return recipeRepository.save(existingRecipe);
     }
 
     public void deleteRecipe(int recipeId, Integer userId) {
-
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
 
-
-        if(!recipeRepository.existsByRecipeIDAndUser(recipeId, user)) {
-            throw new RecipeNotFoundException("Recipe not found with id: " + recipeId);
-        }
-
         if (!recipe.getUser().getId().equals(userId)) {
             throw new UnauthorizedException("Not authorized to delete this recipe");
         }
 
+        // Delete the video file if it exists
+        if (recipe.getVideoURL() != null) {
+            try {
+                Path videoPath = Paths.get("uploads", recipe.getVideoURL().replaceFirst("/uploads/", ""));
+                Files.deleteIfExists(videoPath);
+            } catch (IOException e) {
+            }
+        }
+
+        // Delete associated meal plans
         mealPlanRepository.deleteAllByRecipe_RecipeID(recipeId);
 
-
+        // Delete the recipe
         recipeRepository.deleteById(recipeId);
     }
 
@@ -173,5 +213,56 @@ public class RecipeService {
 
     public List<Recipe> getRecipesByUserId(Integer userId) {
         return recipeRepository.findByUserIdOrderByCreatedAtDesc(userId);
+    }
+
+    @Transactional
+    public Page<Recipe> getAllVideoRecipes(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return recipeRepository.findByVideoURLIsNotNullOrderByCreatedAtDesc(pageable);
+    }
+
+    @Transactional
+    public Recipe addVideoRecipe(Recipe recipe, Integer userId, MultipartFile video, MultipartFile image) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
+        // Validate video file
+        if (video == null || video.isEmpty()) {
+            throw new IllegalArgumentException("Video file is required for video recipes");
+        }
+
+        // Handle video upload
+        String videoFileName = System.currentTimeMillis() + "_video_" + video.getOriginalFilename();
+        Path videoTargetLocation = this.fileStorageLocation.resolve(videoFileName);
+
+        try {
+            Files.copy(video.getInputStream(), videoTargetLocation);
+            recipe.setVideoURL("/uploads/" + videoFileName);
+        } catch (IOException ex) {
+            throw new RuntimeException("Could not store video " + videoFileName + ". Please try again!", ex);
+        }
+
+        // Handle optional image upload
+        if (image != null && !image.isEmpty()) {
+            String imageFileName = System.currentTimeMillis() + "_" + image.getOriginalFilename();
+            Path imageTargetLocation = this.fileStorageLocation.resolve(imageFileName);
+
+            try {
+                Files.copy(image.getInputStream(), imageTargetLocation);
+                recipe.setImageURL("/uploads/" + imageFileName);
+            } catch (IOException ex) {
+                throw new RuntimeException("Could not store image " + imageFileName + ". Please try again!", ex);
+            }
+        }
+
+        recipe.setUser(user);
+        recipe.setCreatedAt(LocalDateTime.now());
+        return recipeRepository.save(recipe);
+    }
+
+    @Transactional
+    public Page<Recipe> getAllImageRecipes(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return recipeRepository.findByVideoURLIsNullOrderByCreatedAtDesc(pageable);
     }
 }
