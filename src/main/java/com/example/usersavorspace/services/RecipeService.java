@@ -4,6 +4,8 @@ import com.example.usersavorspace.entities.Recipe;
 import com.example.usersavorspace.entities.User;
 import com.example.usersavorspace.exceptions.RecipeNotFoundException;
 import com.example.usersavorspace.exceptions.ResourceNotFoundException;
+import com.example.usersavorspace.exceptions.UnauthorizedException;
+import com.example.usersavorspace.repositories.MealPlanRepository;
 import com.example.usersavorspace.repositories.RecipeRepository;
 import com.example.usersavorspace.repositories.UserRepository;
 import jakarta.transaction.Transactional;
@@ -30,11 +32,13 @@ public class RecipeService {
     private final RecipeRepository recipeRepository;
     private final UserRepository userRepository;
     private final Path fileStorageLocation;
+    private final MealPlanRepository mealPlanRepository;
 
     @Autowired
-    public RecipeService(RecipeRepository recipeRepository, UserRepository userRepository) {
+    public RecipeService(RecipeRepository recipeRepository, UserRepository userRepository, MealPlanRepository mealPlanRepository) {
         this.recipeRepository = recipeRepository;
         this.userRepository = userRepository;
+        this.mealPlanRepository = mealPlanRepository;
         this.fileStorageLocation = Paths.get("uploads").toAbsolutePath().normalize();
 
         try {
@@ -99,10 +103,20 @@ public class RecipeService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
+
 
         if(!recipeRepository.existsByRecipeIDAndUser(recipeId, user)) {
             throw new RecipeNotFoundException("Recipe not found with id: " + recipeId);
         }
+
+        if (!recipe.getUser().getId().equals(userId)) {
+            throw new UnauthorizedException("Not authorized to delete this recipe");
+        }
+
+        mealPlanRepository.deleteAllByRecipe_RecipeID(recipeId);
+
 
         recipeRepository.deleteById(recipeId);
     }
@@ -155,5 +169,9 @@ public class RecipeService {
 
     public List<Recipe> getPopularUserRecipes(Integer userId, int limit) {
         return recipeRepository.findMostCommentedRecipesByUser(userId, PageRequest.of(0, limit));
+    }
+
+    public List<Recipe> getRecipesByUserId(Integer userId) {
+        return recipeRepository.findByUserIdOrderByCreatedAtDesc(userId);
     }
 }

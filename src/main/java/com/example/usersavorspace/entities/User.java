@@ -82,6 +82,14 @@ public class User implements UserDetails {
         return email;
     }
 
+    public User() {
+
+    }
+
+    public User(Integer id) {
+        this.id = id;
+    }
+
     @Override
     public boolean isAccountNonExpired() {
         return true;

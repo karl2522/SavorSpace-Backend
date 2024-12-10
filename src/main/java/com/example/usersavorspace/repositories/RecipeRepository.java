@@ -27,5 +27,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, Integer> {
             "GROUP BY r " +
             "ORDER BY COUNT(c) DESC")
     List<Recipe> findMostCommentedRecipesByUser(Integer userId, Pageable pageable);
+
+    List<Recipe> findByUserIdOrderByCreatedAtDesc(Integer userId);
 }
 

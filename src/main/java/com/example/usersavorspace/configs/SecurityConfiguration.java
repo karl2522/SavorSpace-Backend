@@ -84,6 +84,8 @@ public class SecurityConfiguration {
                         .requestMatchers("/topic").permitAll()
                         .requestMatchers("/app/**").permitAll()
                         .requestMatchers("/user/**").permitAll()
+                        .requestMatchers("/recipes/api/recipes/user").authenticated()
+                        .requestMatchers("/api/meal-plans/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/comments/*/flag").authenticated()
                         .requestMatchers("/users/change-password", "/users/*/reactivate").authenticated()
                         .anyRequest().authenticated()

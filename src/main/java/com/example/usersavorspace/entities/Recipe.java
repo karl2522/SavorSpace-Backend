@@ -9,7 +9,9 @@ import jakarta.persistence.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -61,6 +63,10 @@ public class Recipe {
     @JsonIgnore
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Report> reports;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MealPlan> mealPlans = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false)
@@ -210,6 +216,14 @@ public class Recipe {
 
     public void setForkedVersions(Set<RecipeVersion> forkedVersions) {
         this.forkedVersions = forkedVersions;
+    }
+
+    public List<MealPlan> getMealPlans() {
+        return mealPlans;
+    }
+
+    public void setMealPlans(List<MealPlan> mealPlans) {
+        this.mealPlans = mealPlans;
     }
 }
 

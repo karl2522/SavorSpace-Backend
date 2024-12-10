@@ -3,11 +3,13 @@ package com.example.usersavorspace.controllers;
 import com.example.usersavorspace.dtos.RecipeDTO;
 import com.example.usersavorspace.dtos.UserDTO;
 import com.example.usersavorspace.entities.Recipe;
+import com.example.usersavorspace.entities.User;
 import com.example.usersavorspace.services.RecipeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -159,5 +161,17 @@ public class RecipeController {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(recipeDTOS);
+    }
+
+    @GetMapping("/api/recipes/user")
+    @CrossOrigin(origins = "http://localhost:5173")
+    public ResponseEntity<List<RecipeDTO>> getCurrentUserRecipes(Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        List<Recipe> userRecipes = recipeService.getRecipesByUserId(user.getId());
+        List<RecipeDTO> recipeDTOs = userRecipes.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(recipeDTOs);
     }
 }
